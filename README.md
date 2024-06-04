@@ -1,10 +1,14 @@
 # gojo
+
 Go javascript engine.
 
-Parts:
-1. Lexer
-2. Parser
-3. Something to execute parser
+## Parts by example:
+
+For the code `var x = 5;`
+
+1. Lexer: Produces a stream of tokens `var, x, =, 5, ;`
+2. Parser: Produces an AST `Program -> LetStatement (x = IntegerLiteral 5).`
+3. Interpreter: Process the AST and stores the value in the environment.
 
 ![img.png](img.png)
 
@@ -17,3 +21,4 @@ Parts:
 - Writing an interpreter in go - https://edu.anarcho-copy.org/Programming%20Languages/Go/writing%20an%20INTERPRETER%20in%20go.pdf
 - Acorn js js parser - https://github.com/acornjs/acorn
 - Standard compliant parser - https://github.com/jquery/esprima
+- AST Explore - https://astexplorer.net/
