@@ -1,8 +1,14 @@
 package lexer
 
+import "fmt"
+
 type GojoToken struct {
 	Type GojoTokenType // The type of the token
 	Text string        // The Text of the token
+}
+
+func (t GojoToken) String() string {
+	return fmt.Sprintf("Type: %s, Text: %q", t.Type, t.Text)
 }
 
 type GojoTokenType struct {
@@ -10,6 +16,10 @@ type GojoTokenType struct {
 	BeforeExpr bool   // Can be followed by an expression
 	StartsExpr bool   // Can start an expression
 	IsLoop     bool   // Is loop
+}
+
+func (t GojoTokenType) String() string {
+	return fmt.Sprintf("Label: %s, BeforeExpr: %t, StartsExpr: %t, IsLoop: %t", t.Label, t.BeforeExpr, t.StartsExpr, t.IsLoop)
 }
 
 var tokenKeywords = map[string]GojoTokenType{
@@ -95,6 +105,14 @@ var tokenOperators = map[string]GojoTokenType{
 	"??":  {Label: "??", BeforeExpr: true}, // Coalesce
 }
 
-var tokenText map[string]GojoTokenType = map[string]GojoTokenType{
-	"eof": {Label: "eof"},
+var tokenText = map[string]GojoTokenType{
+	"identifier": {Label: "identifier", StartsExpr: true},
+	"eof":        {Label: "eof"},
+}
+
+var tokenLiterals = map[string]GojoTokenType{
+	"number":   {Label: "number", StartsExpr: true},
+	"string":   {Label: "string", StartsExpr: true},
+	"regexp":   {Label: "regexp", StartsExpr: true},
+	"template": {Label: "template", StartsExpr: true},
 }

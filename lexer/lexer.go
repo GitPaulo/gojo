@@ -1,15 +1,19 @@
 package lexer
 
+import (
+	"fmt"
+	"os"
+)
+
 type Lexer struct {
 	input        string
 	position     int  // current position in input (points to current char)
 	nextPosition int  // current reading position in input (after current char)
 	ch           byte // current char under examination
+	// Exported
+	Start int // start position of the current token
+	End   int // end position of the current token
 }
-
-/**
-New
-*/
 
 func New(input string) *Lexer {
 	l := &Lexer{input: input}
@@ -92,6 +96,8 @@ func (l *Lexer) NextToken() GojoToken {
 		tok = newToken(tokenPunctuation["."], l.ch)
 	case '?':
 		tok = newToken(tokenPunctuation["?"], l.ch)
+	case '"', '\'', '`': // Handle strings with all three quote types
+		tok = l.readString(l.ch)
 	case 0:
 		tok = GojoToken{Type: tokenText["eof"], Text: ""}
 	default:
@@ -99,14 +105,15 @@ func (l *Lexer) NextToken() GojoToken {
 			identifier := l.readIdentifier()
 			tokenType, ok := tokenKeywords[identifier]
 			if !ok {
-				tokenType = GojoTokenType{Label: "identifier"}
+				tokenType = tokenText["identifier"]
 			}
 			return GojoToken{Text: identifier, Type: tokenType}
 		} else if isDigit(l.ch) {
 			number := l.readNumber()
-			return GojoToken{Text: number, Type: GojoTokenType{Label: "number"}}
+			return GojoToken{Text: number, Type: tokenLiterals["number"]}
 		} else {
-			tok = newToken(GojoTokenType{Label: "illegal"}, l.ch)
+			fmt.Println("Unknown token: ", string(l.ch))
+			os.Exit(1)
 		}
 	}
 
@@ -115,25 +122,82 @@ func (l *Lexer) NextToken() GojoToken {
 }
 
 /**
-Read
-- Use byte slices to read identifiers and numbers, converting to strings only when necessary.
-*/
+ * Read methods
+ */
+
+func (l *Lexer) readString(quoteType byte) GojoToken {
+	l.readChar() // Consume the opening quote
+
+	var text string
+	for {
+		ch := l.ch
+		if ch == 0 {
+			fmt.Println("Unterminated string literal")
+			os.Exit(1)
+		} else if ch == quoteType {
+			l.readChar() // Consume closing quote
+			break
+		} else if ch == '\\' {
+			l.readChar() // Consume escape character
+			switch l.ch {
+			case 'n':
+				text += "\n"
+			case 't':
+				text += "\t"
+			case 'r':
+				text += "\r"
+			case '\\':
+				text += "\\"
+			case quoteType: // Handle escaped quote of the same type
+				text += string(quoteType)
+			case '\'': // Handle escaped single quote within double-quoted or backtick strings
+				if quoteType != '"' && quoteType != '`' {
+					fmt.Println("Invalid escape sequence in string: \\'", string(l.ch))
+					os.Exit(1)
+				} else {
+					text += "'"
+				}
+			case '"': // Handle escaped double quote within single-quoted or backtick strings
+				if quoteType != '\'' && quoteType != '`' {
+					fmt.Println("Invalid escape sequence in string: \\\"", string(l.ch))
+					os.Exit(1)
+				} else {
+					text += "\""
+				}
+			case 'x': // Handle hex escapes TODO
+				// Implement logic to read and convert hex digits
+				// text += handleHexEscape()
+			default:
+				fmt.Println("Invalid escape sequence in string: \\", string(l.ch))
+				os.Exit(1)
+			}
+			l.readChar() // Consume escaped character
+		} else {
+			text += string(ch)
+			l.readChar()
+		}
+	}
+
+	return GojoToken{Type: tokenText["string"], Text: text}
+}
 
 func (l *Lexer) readChar() {
 	l.ch = l.peekChar()
-	l.position = l.nextPosition
-	l.nextPosition += 1
+	l.Start = l.position
+	if l.position < len(l.input) {
+		l.position = l.nextPosition
+		l.End = l.position
+		l.nextPosition++
+	} else {
+		l.End = l.position
+	}
 }
 
-func (l *Lexer) readString() string {
-	pos := l.position + 1
-	for {
-		l.readChar()
-		if l.ch == '"' || l.ch == 0 {
-			break
-		}
+func (l *Lexer) peekChar() byte {
+	if l.nextPosition >= len(l.input) {
+		return 0
 	}
-	return l.input[pos:l.position]
+	return l.input[l.nextPosition]
 }
 
 func (l *Lexer) readNumber() string {
@@ -152,17 +216,9 @@ func (l *Lexer) readIdentifier() string {
 	return l.input[pos:l.position]
 }
 
-func (l *Lexer) peekChar() byte {
-	if l.nextPosition >= len(l.input) {
-		return 0
-	} else {
-		return l.input[l.nextPosition]
-	}
-}
-
 /**
-Is
-*/
+ * Character checks
+ */
 
 func isLetter(ch byte) bool {
 	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_'
@@ -173,8 +229,8 @@ func isDigit(ch byte) bool {
 }
 
 /**
-Skips
-*/
+ * Skips: Whitespace and comments
+ */
 
 func (l *Lexer) skipWhitespace() {
 	for l.ch == ' ' || l.ch == '\t' || l.ch == '\n' || l.ch == '\r' {

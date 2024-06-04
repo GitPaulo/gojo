@@ -2,6 +2,11 @@
 
 Go javascript engine.
 
+```
+export GOJO_VERBOSE=true
+go run main.go
+```
+
 ## Parts by example:
 
 For the code `var x = 5;`
@@ -22,3 +27,4 @@ For the code `var x = 5;`
 - Acorn js js parser - https://github.com/acornjs/acorn
 - Standard compliant parser - https://github.com/jquery/esprima
 - AST Explore - https://astexplorer.net/
+
