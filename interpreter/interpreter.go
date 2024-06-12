@@ -2,17 +2,16 @@ package interpreter
 
 import (
 	"fmt"
-	"gojo/config"
 	"gojo/parser"
 	"strconv"
 )
 
 type Interpreter struct {
-	env map[string]interface{}
+	Env map[string]interface{}
 }
 
 func New() *Interpreter {
-	return &Interpreter{env: make(map[string]interface{})}
+	return &Interpreter{Env: make(map[string]interface{})}
 }
 
 func (i *Interpreter) Interpret(program *parser.Program) {
@@ -27,10 +26,8 @@ func (i *Interpreter) evalStatement(stmt parser.Statement) {
 	switch stmt := stmt.(type) {
 	case *parser.VariableDeclaration:
 		val := i.evalExpression(stmt.Value)
-		i.env[stmt.Name.Value] = val
-		if config.LoadConfig().Verbose {
-			fmt.Printf("%s = %v\n", stmt.Name.Value, val)
-		}
+		i.Env[stmt.Name.Value] = val
+		fmt.Printf("%s = %v\n", stmt.Name.Value, val)
 	}
 }
 
@@ -43,8 +40,10 @@ func (i *Interpreter) evalExpression(expr parser.Expression) interface{} {
 			return nil
 		}
 		return val
+	case *parser.BooleanLiteral:
+		return expr.Value
 	case *parser.Identifier:
-		val, ok := i.env[expr.Value]
+		val, ok := i.Env[expr.Value]
 		if !ok {
 			fmt.Printf("Error: Variable '%s' not found\n", expr.Value)
 			return nil
@@ -83,6 +82,22 @@ func (i *Interpreter) evalExpression(expr parser.Expression) interface{} {
 					return nil
 				}
 			}
+		case "&&":
+			leftBool, leftOk := leftVal.(bool)
+			rightBool, rightOk := rightVal.(bool)
+			if leftOk && rightOk {
+				return leftBool && rightBool
+			}
+		case "||":
+			leftBool, leftOk := leftVal.(bool)
+			rightBool, rightOk := rightVal.(bool)
+			if leftOk && rightOk {
+				return leftBool || rightBool
+			}
+		case "==":
+			return leftVal == rightVal
+		case "!=":
+			return leftVal != rightVal
 		default:
 			fmt.Printf("Error: Unsupported operator '%s'\n", expr.Operator)
 			return nil

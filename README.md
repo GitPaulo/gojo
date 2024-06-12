@@ -3,9 +3,21 @@
 Go javascript engine.
 
 ```
-export GOJO_VERBOSE=true
 go run main.go
 ```
+
+Use environment variables to configure the engine.
+- `GOJO_VERBOSE` - Set to `true` to enable verbose logging.
+- `GOJO_TEST` - Set to `true` to run tests only.
+- `GOJO_INPUT_FILE` - Set file path to use it as input.
+
+## Checkpoints
+
+> Yo! This is for learning purposes and not intended to ever be finished.
+
+- Lexer: About halfway to compliance with the ECMAScript spec.
+- Parser: Basic parser that can parse variable declaration statements and simple binary operators.
+- Interpreter (& Go Runtime): Very basic linking between the parser and the interpreter.
 
 ## Parts by example:
 
@@ -17,7 +29,7 @@ For the code `var x = 5;`
 
 ![img.png](img.png)
 
-## Resources
+## References
 
 - ECMAScript spec - https://tc39.es/ecma262/
 - JSConf rust JS engine talk - https://youtu.be/_uD2pijcSi4

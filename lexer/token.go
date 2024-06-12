@@ -8,7 +8,7 @@ type GojoToken struct {
 }
 
 func (t GojoToken) String() string {
-	return fmt.Sprintf("Type: %s, Text: %q", t.Type, t.Text)
+	return fmt.Sprintf("Token { Type: %s, Text: %q }", t.Type.StringInline(), t.Text)
 }
 
 type GojoTokenType struct {
@@ -19,10 +19,17 @@ type GojoTokenType struct {
 }
 
 func (t GojoTokenType) String() string {
-	return fmt.Sprintf("Label: %s, BeforeExpr: %t, StartsExpr: %t, IsLoop: %t", t.Label, t.BeforeExpr, t.StartsExpr, t.IsLoop)
+	return fmt.Sprintf("TokenType { Label: %s, BeforeExpr: %t, StartsExpr: %t, IsLoop: %t }",
+		t.Label, t.BeforeExpr, t.StartsExpr, t.IsLoop)
 }
 
-var tokenKeywords = map[string]GojoTokenType{
+// StringInline formats the GojoTokenType inline for better readability in nested structures.
+func (t GojoTokenType) StringInline() string {
+	return fmt.Sprintf("Label: %s, BeforeExpr: %t, StartsExpr: %t, IsLoop: %t",
+		t.Label, t.BeforeExpr, t.StartsExpr, t.IsLoop)
+}
+
+var TokenKeywords = map[string]GojoTokenType{
 	"break":      {Label: "break", BeforeExpr: true},
 	"case":       {Label: "case", BeforeExpr: true},
 	"catch":      {Label: "catch", BeforeExpr: true},
@@ -60,7 +67,7 @@ var tokenKeywords = map[string]GojoTokenType{
 	"delete":     {Label: "delete", BeforeExpr: true, StartsExpr: true},
 }
 
-var tokenPunctuation = map[string]GojoTokenType{
+var TokenPunctuation = map[string]GojoTokenType{
 	"(":   {Label: "(", BeforeExpr: true, StartsExpr: true},
 	")":   {Label: ")", BeforeExpr: false},
 	"{":   {Label: "{", BeforeExpr: true, StartsExpr: true},
@@ -76,7 +83,7 @@ var tokenPunctuation = map[string]GojoTokenType{
 	"...": {Label: "...", BeforeExpr: true},
 }
 
-var tokenOperators = map[string]GojoTokenType{
+var TokenOperators = map[string]GojoTokenType{
 	"=":   {Label: "=", BeforeExpr: true},
 	"+":   {Label: "+", BeforeExpr: true, StartsExpr: true}, // Can be unary or binary
 	"-":   {Label: "-", BeforeExpr: true, StartsExpr: true}, // Can be unary or binary
@@ -105,12 +112,12 @@ var tokenOperators = map[string]GojoTokenType{
 	"??":  {Label: "??", BeforeExpr: true}, // Coalesce
 }
 
-var tokenText = map[string]GojoTokenType{
+var TokenText = map[string]GojoTokenType{
 	"identifier": {Label: "identifier", StartsExpr: true},
 	"eof":        {Label: "eof"},
 }
 
-var tokenLiterals = map[string]GojoTokenType{
+var TokenLiterals = map[string]GojoTokenType{
 	"number":   {Label: "number", StartsExpr: true},
 	"string":   {Label: "string", StartsExpr: true},
 	"regexp":   {Label: "regexp", StartsExpr: true},

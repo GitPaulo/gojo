@@ -3,6 +3,7 @@ package lexer
 import (
 	"fmt"
 	"os"
+	"unicode"
 )
 
 type Lexer struct {
@@ -21,9 +22,9 @@ func New(input string) *Lexer {
 	return l
 }
 
-func newToken(tokenType GojoTokenType, ch byte) GojoToken {
+func newToken(tokenType GojoTokenType, text string) GojoToken {
 	return GojoToken{
-		Text: string(ch),
+		Text: text,
 		Type: tokenType,
 	}
 }
@@ -41,76 +42,75 @@ func (l *Lexer) NextToken() GojoToken {
 		} else if l.peekChar() == '*' {
 			l.skipBlockComment()
 			return l.NextToken()
+		} else if l.peekChar() == '/' || l.peekChar() == '*' || l.peekChar() == '+' || l.peekChar() == '-' {
+			return l.readRegex()
 		} else {
-			tok = newToken(tokenOperators["/"], l.ch)
+			tok = newToken(TokenOperators["/"], string(l.ch))
 		}
 	case '=':
-		if l.peekChar() == '=' {
-			l.readChar()
-			if l.peekChar() == '=' {
-				l.readChar()
-				tok = newToken(tokenOperators["==="], l.ch)
-			} else {
-				tok = newToken(tokenOperators["=="], l.ch)
-			}
-		} else {
-			tok = newToken(tokenOperators["="], l.ch)
-		}
+		tok = l.readTwoCharOperator('=', TokenOperators["="], TokenOperators["=="], TokenOperators["==="])
 	case '+':
-		tok = newToken(tokenOperators["+"], l.ch)
+		tok = l.readTwoCharOperator('+', TokenOperators["+"], TokenOperators["+="], TokenOperators["++"])
 	case '-':
-		tok = newToken(tokenOperators["-"], l.ch)
+		tok = l.readTwoCharOperator('-', TokenOperators["-"], TokenOperators["-="], TokenOperators["--"])
 	case '*':
-		tok = newToken(tokenOperators["*"], l.ch)
+		tok = l.readTwoCharOperator('*', TokenOperators["*"], TokenOperators["*="], TokenOperators["**"])
 	case '!':
-		if l.peekChar() == '=' {
-			l.readChar()
-			if l.peekChar() == '=' {
-				l.readChar()
-				tok = newToken(tokenOperators["!=="], l.ch)
-			} else {
-				tok = newToken(tokenOperators["!="], l.ch)
-			}
-		} else {
-			tok = newToken(tokenOperators["!"], l.ch)
-		}
-	case '(':
-		tok = newToken(tokenPunctuation["("], l.ch)
-	case ')':
-		tok = newToken(tokenPunctuation[")"], l.ch)
-	case '{':
-		tok = newToken(tokenPunctuation["{"], l.ch)
-	case '}':
-		tok = newToken(tokenPunctuation["}"], l.ch)
-	case '[':
-		tok = newToken(tokenPunctuation["["], l.ch)
-	case ']':
-		tok = newToken(tokenPunctuation["]"], l.ch)
-	case ',':
-		tok = newToken(tokenPunctuation[","], l.ch)
-	case ';':
-		tok = newToken(tokenPunctuation[";"], l.ch)
-	case ':':
-		tok = newToken(tokenPunctuation[":"], l.ch)
+		tok = l.readTwoCharOperator('=', TokenOperators["!"], TokenOperators["!="], TokenOperators["!=="])
+	case '<':
+		tok = l.readTwoCharOperator('<', TokenOperators["<"], TokenOperators["<="], TokenOperators["<<"])
+	case '>':
+		tok = l.readTwoCharOperator('>', TokenOperators[">"], TokenOperators[">="], TokenOperators[">>"])
+	case '&':
+		tok = l.readTwoCharOperator('&', TokenOperators["&"], TokenOperators["&="], TokenOperators["&&"])
+	case '|':
+		tok = l.readTwoCharOperator('|', TokenOperators["|"], TokenOperators["|="], TokenOperators["||"])
+	case '^':
+		tok = l.readTwoCharOperator('^', TokenOperators["^"], TokenOperators["^="], TokenOperators["^"])
+	case '%':
+		tok = l.readTwoCharOperator('%', TokenOperators["%"], TokenOperators["%="], TokenOperators["%"])
 	case '.':
-		tok = newToken(tokenPunctuation["."], l.ch)
+		tok = newToken(TokenPunctuation["."], string(l.ch))
+		if l.peekChar() == '.' && l.peekCharTwo() == '.' {
+			l.readChar()
+			l.readChar()
+			tok = newToken(TokenPunctuation["..."], "...")
+		}
+	case ',':
+		tok = newToken(TokenPunctuation[","], string(l.ch))
+	case ';':
+		tok = newToken(TokenPunctuation[";"], string(l.ch))
+	case ':':
+		tok = newToken(TokenPunctuation[":"], string(l.ch))
+	case '(':
+		tok = newToken(TokenPunctuation["("], string(l.ch))
+	case ')':
+		tok = newToken(TokenPunctuation[")"], string(l.ch))
+	case '{':
+		tok = newToken(TokenPunctuation["{"], string(l.ch))
+	case '}':
+		tok = newToken(TokenPunctuation["}"], string(l.ch))
+	case '[':
+		tok = newToken(TokenPunctuation["["], string(l.ch))
+	case ']':
+		tok = newToken(TokenPunctuation["]"], string(l.ch))
 	case '?':
-		tok = newToken(tokenPunctuation["?"], l.ch)
+		tok = newToken(TokenPunctuation["?"], string(l.ch))
 	case '"', '\'', '`': // Handle strings with all three quote types
 		tok = l.readString(l.ch)
 	case 0:
-		tok = GojoToken{Type: tokenText["eof"], Text: ""}
+		tok = GojoToken{Type: TokenText["eof"], Text: ""}
 	default:
 		if isLetter(l.ch) {
 			identifier := l.readIdentifier()
-			tokenType, ok := tokenKeywords[identifier]
+			tokenType, ok := TokenKeywords[identifier]
 			if !ok {
-				tokenType = tokenText["identifier"]
+				tokenType = TokenText["identifier"]
 			}
 			return GojoToken{Text: identifier, Type: tokenType}
 		} else if isDigit(l.ch) {
 			number := l.readNumber()
-			return GojoToken{Text: number, Type: tokenLiterals["number"]}
+			return GojoToken{Text: number, Type: TokenLiterals["number"]}
 		} else {
 			fmt.Println("Unknown token: ", string(l.ch))
 			os.Exit(1)
@@ -124,6 +124,21 @@ func (l *Lexer) NextToken() GojoToken {
 /**
  * Read methods
  */
+
+func (l *Lexer) readTwoCharOperator(expected byte, single, double, triple GojoTokenType) GojoToken {
+	ch := string(l.ch)
+	if l.peekChar() == expected {
+		l.readChar()
+		ch += string(l.ch)
+		if l.peekChar() == expected && (single.Label == "==" || single.Label == "!=" || single.Label == "<" || single.Label == ">" || single.Label == "+" || single.Label == "-" || single.Label == "*" || single.Label == "/" || single.Label == "%" || single.Label == "&" || single.Label == "|" || single.Label == "^") {
+			l.readChar()
+			ch += string(l.ch)
+			return newToken(triple, ch)
+		}
+		return newToken(double, ch)
+	}
+	return newToken(single, ch)
+}
 
 func (l *Lexer) readString(quoteType byte) GojoToken {
 	l.readChar() // Consume the opening quote
@@ -150,23 +165,18 @@ func (l *Lexer) readString(quoteType byte) GojoToken {
 				text += "\\"
 			case quoteType: // Handle escaped quote of the same type
 				text += string(quoteType)
-			case '\'': // Handle escaped single quote within double-quoted or backtick strings
-				if quoteType != '"' && quoteType != '`' {
-					fmt.Println("Invalid escape sequence in string: \\'", string(l.ch))
-					os.Exit(1)
-				} else {
-					text += "'"
-				}
-			case '"': // Handle escaped double quote within single-quoted or backtick strings
-				if quoteType != '\'' && quoteType != '`' {
-					fmt.Println("Invalid escape sequence in string: \\\"", string(l.ch))
-					os.Exit(1)
-				} else {
-					text += "\""
-				}
-			case 'x': // Handle hex escapes TODO
-				// Implement logic to read and convert hex digits
-				// text += handleHexEscape()
+			case '\'':
+				text += "'"
+			case '"':
+				text += "\""
+			case '`':
+				text += "`"
+			case 'x':
+				hex := l.readHex(2)
+				text += fmt.Sprintf("\\x%s", hex)
+			case 'u':
+				hex := l.readHex(4)
+				text += fmt.Sprintf("\\u%s", hex)
 			default:
 				fmt.Println("Invalid escape sequence in string: \\", string(l.ch))
 				os.Exit(1)
@@ -178,7 +188,32 @@ func (l *Lexer) readString(quoteType byte) GojoToken {
 		}
 	}
 
-	return GojoToken{Type: tokenText["string"], Text: text}
+	return GojoToken{Type: TokenLiterals["string"], Text: text}
+}
+
+func (l *Lexer) readRegex() GojoToken {
+	startPos := l.position
+	for {
+		l.readChar()
+		if l.ch == '/' && l.input[l.position-1] != '\\' {
+			break
+		}
+		if l.ch == 0 {
+			fmt.Println("Unterminated regex literal")
+			os.Exit(1)
+		}
+	}
+	l.readChar() // Move past the closing '/'
+	return GojoToken{Type: TokenLiterals["regexp"], Text: l.input[startPos:l.position]}
+}
+
+func (l *Lexer) readHex(length int) string {
+	var hex string
+	for i := 0; i < length; i++ {
+		l.readChar()
+		hex += string(l.ch)
+	}
+	return hex
 }
 
 func (l *Lexer) readChar() {
@@ -200,6 +235,13 @@ func (l *Lexer) peekChar() byte {
 	return l.input[l.nextPosition]
 }
 
+func (l *Lexer) peekCharTwo() byte {
+	if l.nextPosition+1 >= len(l.input) {
+		return 0
+	}
+	return l.input[l.nextPosition+1]
+}
+
 func (l *Lexer) readNumber() string {
 	pos := l.position
 	for isDigit(l.ch) {
@@ -210,7 +252,7 @@ func (l *Lexer) readNumber() string {
 
 func (l *Lexer) readIdentifier() string {
 	pos := l.position
-	for isLetter(l.ch) {
+	for isLetter(l.ch) || isDigit(l.ch) {
 		l.readChar()
 	}
 	return l.input[pos:l.position]
@@ -221,7 +263,7 @@ func (l *Lexer) readIdentifier() string {
  */
 
 func isLetter(ch byte) bool {
-	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_'
+	return unicode.IsLetter(rune(ch)) || ch == '_'
 }
 
 func isDigit(ch byte) bool {
@@ -233,7 +275,7 @@ func isDigit(ch byte) bool {
  */
 
 func (l *Lexer) skipWhitespace() {
-	for l.ch == ' ' || l.ch == '\t' || l.ch == '\n' || l.ch == '\r' {
+	for unicode.IsSpace(rune(l.ch)) {
 		l.readChar()
 	}
 }
