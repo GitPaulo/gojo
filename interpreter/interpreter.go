@@ -27,7 +27,7 @@ func (i *Interpreter) evalStatement(stmt parser.Statement) {
 	case *parser.VariableDeclaration:
 		val := i.evalExpression(stmt.Value)
 		i.Env[stmt.Name.Value] = val
-		fmt.Printf("%s = %v\n", stmt.Name.Value, val)
+		fmt.Printf("%s = %v (Line: %d)\n", stmt.Name.Value, val, stmt.Token.Line)
 	}
 }
 
@@ -36,16 +36,14 @@ func (i *Interpreter) evalExpression(expr parser.Expression) interface{} {
 	case *parser.IntegerLiteral:
 		val, err := strconv.ParseInt(expr.Token.Text, 0, 64)
 		if err != nil {
-			fmt.Printf("Error: %v\n", err)
+			fmt.Printf("Error (Line: %d): %v\n", expr.Token.Line, err)
 			return nil
 		}
 		return val
-	case *parser.BooleanLiteral:
-		return expr.Value
 	case *parser.Identifier:
 		val, ok := i.Env[expr.Value]
 		if !ok {
-			fmt.Printf("Error: Variable '%s' not found\n", expr.Value)
+			fmt.Printf("Error (Line: %d): Variable '%s' not found\n", expr.Token.Line, expr.Value)
 			return nil
 		}
 		return val
@@ -78,28 +76,12 @@ func (i *Interpreter) evalExpression(expr parser.Expression) interface{} {
 				if rightInt != 0 {
 					return leftInt / rightInt
 				} else {
-					fmt.Println("Error: Division by zero")
+					fmt.Printf("Error (Line: %d): Division by zero\n", expr.Token.Line)
 					return nil
 				}
 			}
-		case "&&":
-			leftBool, leftOk := leftVal.(bool)
-			rightBool, rightOk := rightVal.(bool)
-			if leftOk && rightOk {
-				return leftBool && rightBool
-			}
-		case "||":
-			leftBool, leftOk := leftVal.(bool)
-			rightBool, rightOk := rightVal.(bool)
-			if leftOk && rightOk {
-				return leftBool || rightBool
-			}
-		case "==":
-			return leftVal == rightVal
-		case "!=":
-			return leftVal != rightVal
 		default:
-			fmt.Printf("Error: Unsupported operator '%s'\n", expr.Operator)
+			fmt.Printf("Error (Line: %d): Unsupported operator '%s'\n", expr.Token.Line, expr.Operator)
 			return nil
 		}
 	default:

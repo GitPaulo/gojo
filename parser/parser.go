@@ -20,6 +20,7 @@ const (
 type Parser struct {
 	l             *lexer.Lexer
 	errors        []string
+	curLine       int
 	curToken      lexer.GojoToken
 	curTokenStart int
 	curTokenEnd   int
@@ -41,14 +42,18 @@ func (p *Parser) nextToken() {
 	p.curToken = token
 	p.curTokenStart = p.l.Start
 	p.curTokenEnd = p.l.End
-	p.peekToken = p.l.NextToken()
+	p.curLine = p.l.Line
 
 	if config.LoadConfig().Verbose {
-		fmt.Println("---")
+		fmt.Println("╔═══ nextToken() ")
 		fmt.Println("Current Token:", p.curToken)
 		fmt.Println("Start Position:", p.curTokenStart)
 		fmt.Println("End Position:", p.curTokenEnd)
+		fmt.Println("Current Line:", p.curLine)
+		fmt.Println("Peek Token:", p.peekToken)
 	}
+
+	p.peekToken = p.l.NextToken()
 }
 
 /**
@@ -56,19 +61,21 @@ func (p *Parser) nextToken() {
  */
 
 func (p *Parser) ParseProgram() *Program {
-	program := &Program{}
+	program := &Program{Start: 0}
 	program.Statements = []Statement{}
 
 	for p.curToken.Type.Label != "eof" {
 		stmt := p.parseStatement()
 		if stmt != nil {
 			if config.LoadConfig().Verbose {
-				fmt.Println("Generated Statement:", stmt)
+				fmt.Println("╚══ parseStatement():", stmt)
 			}
 			program.Statements = append(program.Statements, stmt)
 		}
 		p.nextToken()
 	}
+
+	program.End = p.curTokenEnd
 
 	return program
 }

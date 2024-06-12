@@ -2,6 +2,7 @@ package lexer
 
 import (
 	"fmt"
+	"gojo/config"
 	"os"
 	"unicode"
 )
@@ -12,20 +13,22 @@ type Lexer struct {
 	nextPosition int  // current reading position in input (after current char)
 	ch           byte // current char under examination
 	// Exported
+	Line  int // current line number
 	Start int // start position of the current token
 	End   int // end position of the current token
 }
 
 func New(input string) *Lexer {
-	l := &Lexer{input: input}
+	l := &Lexer{input: input, Line: 1}
 	l.readChar()
 	return l
 }
 
-func newToken(tokenType GojoTokenType, text string) GojoToken {
+func (l *Lexer) NewToken(tokenType GojoTokenType, text string) GojoToken {
 	return GojoToken{
 		Text: text,
 		Type: tokenType,
+		Line: l.Line,
 	}
 }
 
@@ -45,7 +48,7 @@ func (l *Lexer) NextToken() GojoToken {
 		} else if l.peekChar() == '/' || l.peekChar() == '*' || l.peekChar() == '+' || l.peekChar() == '-' {
 			return l.readRegex()
 		} else {
-			tok = newToken(TokenOperators["/"], string(l.ch))
+			tok = l.NewToken(TokenOperators["/"], string(l.ch))
 		}
 	case '=':
 		tok = l.readTwoCharOperator('=', TokenOperators["="], TokenOperators["=="], TokenOperators["==="])
@@ -70,32 +73,32 @@ func (l *Lexer) NextToken() GojoToken {
 	case '%':
 		tok = l.readTwoCharOperator('%', TokenOperators["%"], TokenOperators["%="], TokenOperators["%"])
 	case '.':
-		tok = newToken(TokenPunctuation["."], string(l.ch))
+		tok = l.NewToken(TokenPunctuation["."], string(l.ch))
 		if l.peekChar() == '.' && l.peekCharTwo() == '.' {
 			l.readChar()
 			l.readChar()
-			tok = newToken(TokenPunctuation["..."], "...")
+			tok = l.NewToken(TokenPunctuation["..."], "...")
 		}
 	case ',':
-		tok = newToken(TokenPunctuation[","], string(l.ch))
+		tok = l.NewToken(TokenPunctuation[","], string(l.ch))
 	case ';':
-		tok = newToken(TokenPunctuation[";"], string(l.ch))
+		tok = l.NewToken(TokenPunctuation[";"], string(l.ch))
 	case ':':
-		tok = newToken(TokenPunctuation[":"], string(l.ch))
+		tok = l.NewToken(TokenPunctuation[":"], string(l.ch))
 	case '(':
-		tok = newToken(TokenPunctuation["("], string(l.ch))
+		tok = l.NewToken(TokenPunctuation["("], string(l.ch))
 	case ')':
-		tok = newToken(TokenPunctuation[")"], string(l.ch))
+		tok = l.NewToken(TokenPunctuation[")"], string(l.ch))
 	case '{':
-		tok = newToken(TokenPunctuation["{"], string(l.ch))
+		tok = l.NewToken(TokenPunctuation["{"], string(l.ch))
 	case '}':
-		tok = newToken(TokenPunctuation["}"], string(l.ch))
+		tok = l.NewToken(TokenPunctuation["}"], string(l.ch))
 	case '[':
-		tok = newToken(TokenPunctuation["["], string(l.ch))
+		tok = l.NewToken(TokenPunctuation["["], string(l.ch))
 	case ']':
-		tok = newToken(TokenPunctuation["]"], string(l.ch))
+		tok = l.NewToken(TokenPunctuation["]"], string(l.ch))
 	case '?':
-		tok = newToken(TokenPunctuation["?"], string(l.ch))
+		tok = l.NewToken(TokenPunctuation["?"], string(l.ch))
 	case '"', '\'', '`': // Handle strings with all three quote types
 		tok = l.readString(l.ch)
 	case 0:
@@ -107,10 +110,10 @@ func (l *Lexer) NextToken() GojoToken {
 			if !ok {
 				tokenType = TokenText["identifier"]
 			}
-			return GojoToken{Text: identifier, Type: tokenType}
+			return l.NewToken(tokenType, identifier)
 		} else if isDigit(l.ch) {
 			number := l.readNumber()
-			return GojoToken{Text: number, Type: TokenLiterals["number"]}
+			return l.NewToken(TokenLiterals["number"], number)
 		} else {
 			fmt.Println("Unknown token: ", string(l.ch))
 			os.Exit(1)
@@ -133,11 +136,11 @@ func (l *Lexer) readTwoCharOperator(expected byte, single, double, triple GojoTo
 		if l.peekChar() == expected && (single.Label == "==" || single.Label == "!=" || single.Label == "<" || single.Label == ">" || single.Label == "+" || single.Label == "-" || single.Label == "*" || single.Label == "/" || single.Label == "%" || single.Label == "&" || single.Label == "|" || single.Label == "^") {
 			l.readChar()
 			ch += string(l.ch)
-			return newToken(triple, ch)
+			return l.NewToken(triple, ch)
 		}
-		return newToken(double, ch)
+		return l.NewToken(double, ch)
 	}
-	return newToken(single, ch)
+	return l.NewToken(single, ch)
 }
 
 func (l *Lexer) readString(quoteType byte) GojoToken {
@@ -188,7 +191,7 @@ func (l *Lexer) readString(quoteType byte) GojoToken {
 		}
 	}
 
-	return GojoToken{Type: TokenLiterals["string"], Text: text}
+	return l.NewToken(TokenLiterals["string"], text)
 }
 
 func (l *Lexer) readRegex() GojoToken {
@@ -204,7 +207,7 @@ func (l *Lexer) readRegex() GojoToken {
 		}
 	}
 	l.readChar() // Move past the closing '/'
-	return GojoToken{Type: TokenLiterals["regexp"], Text: l.input[startPos:l.position]}
+	return l.NewToken(TokenLiterals["regexp"], l.input[startPos:l.position])
 }
 
 func (l *Lexer) readHex(length int) string {
@@ -217,6 +220,12 @@ func (l *Lexer) readHex(length int) string {
 }
 
 func (l *Lexer) readChar() {
+	if l.ch == '\n' {
+		if config.LoadConfig().Verbose {
+			fmt.Println("░ Newline detected")
+		}
+		l.Line++
+	}
 	l.ch = l.peekChar()
 	l.Start = l.position
 	if l.position < len(l.input) {

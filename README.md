@@ -21,11 +21,11 @@ Use environment variables to configure the engine.
 
 ## Parts by example:
 
-For the code `var x = 5;`
+For the code `var x = 1 + 1;`
 
-1. Lexer: Produces a stream of tokens `var, x, =, 5, ;`
-2. Parser: Produces an AST `Program -> LetStatement (x = IntegerLiteral 5).`
-3. Interpreter: Process the AST and stores the value in the environment.
+1. Lexer: Produces a stream of tokens `var, x, =, 1, +, 1, ;`
+2. Parser: Produces an AST `Program -> Statements[] -> VariableDeclaration(x = BinaryExpression(1 + 1))`
+3. Interpreter: Process the AST and stores the value in the environment `x = 2`
 
 ![img.png](img.png)
 

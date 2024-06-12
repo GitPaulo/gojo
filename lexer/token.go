@@ -5,10 +5,11 @@ import "fmt"
 type GojoToken struct {
 	Type GojoTokenType // The type of the token
 	Text string        // The Text of the token
+	Line int           // The line number of the token
 }
 
 func (t GojoToken) String() string {
-	return fmt.Sprintf("Token { Type: %s, Text: %q }", t.Type.StringInline(), t.Text)
+	return fmt.Sprintf("Token { Type: %s, Text: %q, Line: %d }", t.Type.StringInline(), t.Text, t.Line)
 }
 
 type GojoTokenType struct {
