@@ -15,8 +15,8 @@ Use environment variables to configure the engine.
 
 > Yo! This is for learning purposes and not intended to ever be finished.
 
-- Lexer: About halfway to compliance with the ECMAScript spec.
-- Parser: Basic parser that can parse control statements variables functions and binary expressions.
+- Lexer (FSM): About halfway to compliance with the ECMAScript spec.
+- Parser (Recursive Descent): Basic parser that can parse control statements variables functions and binary expressions.
 - Interpreter (& Go Runtime): Very basic linking between the parser and the interpreter. Only supports variable declaration and binary operators.
 
 ## Parts by example:
@@ -39,4 +39,5 @@ For the code `var x = 1 + 1;`
 - Acorn js js parser - https://github.com/acornjs/acorn
 - Standard compliant parser - https://github.com/jquery/esprima
 - AST Explore - https://astexplorer.net/
+- Recursive Descent Parsing: https://www.cs.rochester.edu/u/nelson/courses/csc_173/grammars/parsing.html#:~:text=Recursive-descent%20parsing%20is%20one,non-terminal%20with%20a%20procedure
 

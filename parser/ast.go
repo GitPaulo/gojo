@@ -63,7 +63,7 @@ type VariableDeclaration struct {
 func (vd *VariableDeclaration) statementNode()       {}
 func (vd *VariableDeclaration) TokenLiteral() string { return vd.Token.Text }
 func (vd *VariableDeclaration) String() string {
-	return fmt.Sprintf("VariableDeclaration(%s = %s)", vd.Name.String(), vd.Value.String())
+	return fmt.Sprintf("VariableDeclaration(%s %s = %s)", vd.Token.Type.Label, vd.Name.String(), vd.Value.String())
 }
 
 // Identifier represents a variable name.

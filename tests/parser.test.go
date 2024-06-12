@@ -25,7 +25,7 @@ func RunParserTests() {
 			var b = false;
 			var c = a && b;
 			`,
-			expected: `Program(VariableDeclaration(var a = true)VariableDeclaration(var b = false)VariableDeclaration(var c = BinaryExpression(a && b)))`,
+			expected: `Program(VariableDeclaration(var a = true)VariableDeclaration(var b = false)VariableDeclaration(var c = BinaryExpression(a && b))`,
 		},
 	}
 
