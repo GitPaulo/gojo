@@ -16,8 +16,8 @@ Use environment variables to configure the engine.
 > Yo! This is for learning purposes and not intended to ever be finished.
 
 - Lexer: About halfway to compliance with the ECMAScript spec.
-- Parser: Basic parser that can parse variable declaration statements and simple binary operators.
-- Interpreter (& Go Runtime): Very basic linking between the parser and the interpreter.
+- Parser: Basic parser that can parse control statements variables functions and binary expressions.
+- Interpreter (& Go Runtime): Very basic linking between the parser and the interpreter. Only supports variable declaration and binary operators.
 
 ## Parts by example:
 

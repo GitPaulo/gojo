@@ -48,6 +48,7 @@ var TokenKeywords = map[string]GojoTokenType{
 	"throw":      {Label: "throw", BeforeExpr: true},
 	"try":        {Label: "try", BeforeExpr: true},
 	"var":        {Label: "var", BeforeExpr: true},
+	"let":        {Label: "var", BeforeExpr: true},
 	"const":      {Label: "const", BeforeExpr: true},
 	"while":      {Label: "while", IsLoop: true},
 	"with":       {Label: "with", BeforeExpr: true},

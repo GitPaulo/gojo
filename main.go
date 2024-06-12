@@ -23,16 +23,17 @@ func main() {
 		return
 	}
 
-	// Default input or file input
-	const defaultInput = "var x = 5;\nvar y = 10;\nvar z = x + y;\n"
-	input := defaultInput
-	if env.InputFile != "" {
-		var err error
-		input, err = readFile(env.InputFile)
-		if err != nil {
-			fmt.Printf("Error reading input file: %v\n", err)
-			return
-		}
+	// Input through input_program.js
+	inputFile := env.InputFile
+	if inputFile == "" {
+		inputFile = "input_program.js"
+	}
+	var input string
+	var err error
+	input, err = readFile(inputFile)
+	if err != nil {
+		fmt.Printf("Error reading input file: %v\n", err)
+		return
 	}
 	printInput(input)
 
