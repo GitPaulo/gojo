@@ -8,6 +8,7 @@ import (
 )
 
 func RunInterpreterTests() {
+	fmt.Println("=== Interpreter Tests ===")
 	tests := []struct {
 		input    string
 		expected map[string]interface{}

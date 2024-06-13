@@ -7,6 +7,7 @@ import (
 )
 
 func RunParserTests() {
+	fmt.Println("=== Parser Tests ===")
 	tests := []struct {
 		input    string
 		expected string

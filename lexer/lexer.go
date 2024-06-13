@@ -25,6 +25,8 @@ func New(input string) *Lexer {
 }
 
 func (l *Lexer) NewToken(tokenType GojoTokenType, text string) GojoToken {
+	fmt.Println("New Token:", text)
+	fmt.Println("Token Type:", tokenType)
 	return GojoToken{
 		Text: text,
 		Type: tokenType,
@@ -51,27 +53,27 @@ func (l *Lexer) NextToken() GojoToken {
 			tok = l.NewToken(TokenOperators["/"], string(l.ch))
 		}
 	case '=':
-		tok = l.readTwoCharOperator('=', TokenOperators["="], TokenOperators["=="], TokenOperators["==="])
+		tok = l.readMultiCharOperator('=', TokenOperators["="], TokenOperators["=="], TokenOperators["==="])
 	case '+':
-		tok = l.readTwoCharOperator('+', TokenOperators["+"], TokenOperators["+="], TokenOperators["++"])
+		tok = l.readMultiCharOperator('+', TokenOperators["+"], TokenOperators["+="], TokenOperators["++"])
 	case '-':
-		tok = l.readTwoCharOperator('-', TokenOperators["-"], TokenOperators["-="], TokenOperators["--"])
+		tok = l.readMultiCharOperator('-', TokenOperators["-"], TokenOperators["-="], TokenOperators["--"])
 	case '*':
-		tok = l.readTwoCharOperator('*', TokenOperators["*"], TokenOperators["*="], TokenOperators["**"])
+		tok = l.readMultiCharOperator('*', TokenOperators["*"], TokenOperators["*="], TokenOperators["**"])
 	case '!':
-		tok = l.readTwoCharOperator('=', TokenOperators["!"], TokenOperators["!="], TokenOperators["!=="])
+		tok = l.readMultiCharOperator('!', TokenOperators["!"], TokenOperators["!="], TokenOperators["!=="])
 	case '<':
-		tok = l.readTwoCharOperator('<', TokenOperators["<"], TokenOperators["<="], TokenOperators["<<"])
+		tok = l.readMultiCharOperator('<', TokenOperators["<"], TokenOperators["<="], TokenOperators["<<"])
 	case '>':
-		tok = l.readTwoCharOperator('>', TokenOperators[">"], TokenOperators[">="], TokenOperators[">>"])
+		tok = l.readMultiCharOperator('>', TokenOperators[">"], TokenOperators[">="], TokenOperators[">>"])
 	case '&':
-		tok = l.readTwoCharOperator('&', TokenOperators["&"], TokenOperators["&="], TokenOperators["&&"])
+		tok = l.readMultiCharOperator('&', TokenOperators["&"], TokenOperators["&&"])
 	case '|':
-		tok = l.readTwoCharOperator('|', TokenOperators["|"], TokenOperators["|="], TokenOperators["||"])
+		tok = l.readMultiCharOperator('|', TokenOperators["|"], TokenOperators["|="], TokenOperators["||"])
 	case '^':
-		tok = l.readTwoCharOperator('^', TokenOperators["^"], TokenOperators["^="], TokenOperators["^"])
+		tok = l.readMultiCharOperator('^', TokenOperators["^"], TokenOperators["^="], TokenOperators["^"])
 	case '%':
-		tok = l.readTwoCharOperator('%', TokenOperators["%"], TokenOperators["%="], TokenOperators["%"])
+		tok = l.readMultiCharOperator('%', TokenOperators["%"], TokenOperators["%="], TokenOperators["%"])
 	case '.':
 		tok = l.NewToken(TokenPunctuation["."], string(l.ch))
 		if l.peekChar() == '.' && l.peekCharTwo() == '.' {
@@ -128,19 +130,16 @@ func (l *Lexer) NextToken() GojoToken {
  * Read methods
  */
 
-func (l *Lexer) readTwoCharOperator(expected byte, single, double, triple GojoTokenType) GojoToken {
+func (l *Lexer) readMultiCharOperator(expected byte, options ...GojoTokenType) GojoToken {
 	ch := string(l.ch)
-	if l.peekChar() == expected {
-		l.readChar()
-		ch += string(l.ch)
-		if l.peekChar() == expected && (single.Label == "==" || single.Label == "!=" || single.Label == "<" || single.Label == ">" || single.Label == "+" || single.Label == "-" || single.Label == "*" || single.Label == "/" || single.Label == "%" || single.Label == "&" || single.Label == "|" || single.Label == "^") {
+	for _, option := range options {
+		if l.peekChar() == expected {
 			l.readChar()
 			ch += string(l.ch)
-			return l.NewToken(triple, ch)
+			return l.NewToken(option, ch)
 		}
-		return l.NewToken(double, ch)
 	}
-	return l.NewToken(single, ch)
+	return l.NewToken(options[0], ch)
 }
 
 func (l *Lexer) readString(quoteType byte) GojoToken {

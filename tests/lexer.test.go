@@ -12,6 +12,7 @@ type TestCase struct {
 }
 
 func RunLexerTests() {
+	fmt.Println("=== Lexer Tests ===")
 	env := config.LoadConfig()
 	tests := []TestCase{
 		// Test variable declarations and basic arithmetic operations

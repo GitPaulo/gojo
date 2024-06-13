@@ -13,13 +13,9 @@ import (
 func main() {
 	env := config.LoadConfig()
 	if env.Test {
-		fmt.Println("=== Lexer Tests ===")
 		tests.RunLexerTests()
-		fmt.Println("=== Parser Tests ===")
 		tests.RunParserTests()
-		fmt.Println("=== Interpreter Tests ===")
 		tests.RunInterpreterTests()
-		fmt.Println("Tests ran. Exiting...")
 		return
 	}
 

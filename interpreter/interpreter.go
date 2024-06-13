@@ -3,6 +3,7 @@ package interpreter
 import (
 	"fmt"
 	"gojo/parser"
+	"math"
 	"strconv"
 )
 
@@ -28,11 +29,36 @@ func (i *Interpreter) evalStatement(stmt parser.Statement) {
 		val := i.evalExpression(stmt.Value)
 		i.Env[stmt.Name.Value] = val
 		fmt.Printf("%s = %v (Line: %d)\n", stmt.Name.Value, val, stmt.Token.Line)
+	case *parser.IfStatement:
+		i.evalIfStatement(stmt)
+	case *parser.WhileStatement:
+		for i.evalExpression(stmt.Condition).(bool) {
+			i.evalBlockStatement(stmt.Body)
+		}
+	}
+}
+
+func (i *Interpreter) evalIfStatement(stmt *parser.IfStatement) {
+	condition := i.evalExpression(stmt.Condition)
+	if condition.(bool) {
+		i.evalBlockStatement(stmt.Consequence)
+	} else if stmt.Alternative != nil {
+		i.evalBlockStatement(stmt.Alternative)
+	}
+}
+
+func (i *Interpreter) evalBlockStatement(block *parser.BlockStatement) {
+	for _, stmt := range block.Statements {
+		i.evalStatement(stmt)
 	}
 }
 
 func (i *Interpreter) evalExpression(expr parser.Expression) interface{} {
 	switch expr := expr.(type) {
+	case *parser.StringLiteral:
+		return expr.Value
+	case *parser.BooleanLiteral:
+		return expr.Value
 	case *parser.IntegerLiteral:
 		val, err := strconv.ParseInt(expr.Token.Text, 0, 64)
 		if err != nil {
@@ -47,6 +73,8 @@ func (i *Interpreter) evalExpression(expr parser.Expression) interface{} {
 			return nil
 		}
 		return val
+	case *parser.CallExpression:
+		return i.evalCallExpression(expr)
 	case *parser.BinaryExpression:
 		leftVal := i.evalExpression(expr.Left)
 		rightVal := i.evalExpression(expr.Right)
@@ -76,17 +104,109 @@ func (i *Interpreter) evalExpression(expr parser.Expression) interface{} {
 				if rightInt != 0 {
 					return leftInt / rightInt
 				} else {
-					fmt.Printf("Error (Line: %d): Division by zero\n", expr.Token.Line)
+					fmt.Println("Error: Division by zero")
 					return nil
 				}
 			}
+		case "<":
+			leftInt, leftOk := leftVal.(int64)
+			rightInt, rightOk := rightVal.(int64)
+			if leftOk && rightOk {
+				return leftInt < rightInt
+			}
+		case ">":
+			leftInt, leftOk := leftVal.(int64)
+			rightInt, rightOk := rightVal.(int64)
+			if leftOk && rightOk {
+				return leftInt > rightInt
+			}
+		case "==":
+			return leftVal == rightVal
+		case "!=":
+			return leftVal != rightVal
+		case "&&":
+			leftBool, leftOk := leftVal.(bool)
+			rightBool, rightOk := rightVal.(bool)
+			if leftOk && rightOk {
+				return leftBool && rightBool
+			} else {
+				fmt.Println("Error: Invalid types for && operation")
+				return nil
+			}
+		case "||":
+			leftBool, leftOk := leftVal.(bool)
+			rightBool, rightOk := rightVal.(bool)
+			if leftOk && rightOk {
+				return leftBool || rightBool
+			} else {
+				fmt.Println("Error: Invalid types for || operation")
+				return nil
+			}
 		default:
-			fmt.Printf("Error (Line: %d): Unsupported operator '%s'\n", expr.Token.Line, expr.Operator)
+			fmt.Printf("Error: Unsupported operator '%s'\n", expr.Operator)
 			return nil
 		}
 	default:
-		fmt.Printf("Error: Unsupported expression type\n")
+		fmt.Println("Error: Unsupported expression type", expr)
 		return nil
 	}
 	return nil
+}
+
+func (i *Interpreter) evalCallExpression(expr *parser.CallExpression) interface{} {
+	functionName := expr.Function.(*parser.Identifier).Value
+	switch functionName {
+	/**
+	 * We simply map identifiers to their corresponding golang runtime functions.
+	 * It is what it is.
+	 */
+	case "console.log":
+		args := i.evalExpressions(expr.Arguments)
+		fmt.Println(args...)
+		return nil
+	case "Math.sqrt":
+		if len(expr.Arguments) != 1 {
+			fmt.Printf("Error: Math.sqrt expects 1 argument, got %d\n", len(expr.Arguments))
+			return nil
+		}
+		arg := i.evalExpression(expr.Arguments[0])
+		if num, ok := arg.(int64); ok {
+			return int64(math.Sqrt(float64(num)))
+		} else {
+			fmt.Printf("Error: Math.sqrt expects a numeric argument\n")
+			return nil
+		}
+	case "Math.pow":
+		if len(expr.Arguments) != 2 {
+			fmt.Printf("Error: Math.pow expects 2 arguments, got %d\n", len(expr.Arguments))
+			return nil
+		}
+		base := i.evalExpression(expr.Arguments[0])
+		exponent := i.evalExpression(expr.Arguments[1])
+		if baseNum, ok1 := base.(int64); ok1 {
+			if expNum, ok2 := exponent.(int64); ok2 {
+				return int64(math.Pow(float64(baseNum), float64(expNum)))
+			}
+		}
+		fmt.Printf("Error: Math.pow expects numeric arguments\n")
+		return nil
+	case "typeof":
+		if len(expr.Arguments) != 1 {
+			fmt.Printf("Error: typeof expects 1 argument, got %d\n", len(expr.Arguments))
+			return nil
+		}
+		arg := i.evalExpression(expr.Arguments[0])
+		return fmt.Sprintf("%T", arg)
+	default:
+		fmt.Printf("Error: Unsupported function call '%s'\n", functionName)
+		return nil
+	}
+}
+
+func (i *Interpreter) evalExpressions(exprs []parser.Expression) []interface{} {
+	var result []interface{}
+	for _, expr := range exprs {
+		result = append(result, i.evalExpression(expr))
+	}
+	return result
 }

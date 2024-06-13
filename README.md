@@ -15,9 +15,21 @@ Use environment variables to configure the engine.
 
 > Yo! This is for learning purposes and not intended to ever be finished.
 
-- Lexer (FSM): About halfway to compliance with the ECMAScript spec.
-- Parser (Recursive Descent): Basic parser that can parse control statements variables functions and binary expressions.
-- Interpreter (& Go Runtime): Very basic linking between the parser and the interpreter. Only supports variable declaration and binary operators.
+- Lexer (FSM): Meh compliance with the ECMAScript spec.
+- Parser (Recursive Descent): 
+  - Variables 
+  - Literals: Integers Booleans Strings 
+  - Binary expressions 
+  - Grouped expressions 
+  - If/Else statements 
+  - Basic Function declarations 
+  - Block statements 
+  - While statements
+- Interpreter (& Go Runtime):
+  - Sets variable declarations of above types
+  - Evaluates Simple Binary expressions (+, -, *, /)
+  - Call expressions and translates the following to go runtime:
+    - `console.log, Math.sqrt, Math.pow, typeof`
 
 ## Parts by example:
 
