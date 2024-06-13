@@ -1,0 +1,1 @@
+var regex = /ab+c/;
