@@ -25,8 +25,6 @@ func New(input string) *Lexer {
 }
 
 func (l *Lexer) NewToken(tokenType GojoTokenType, text string) GojoToken {
-	fmt.Println("New Token:", text)
-	fmt.Println("Token Type:", tokenType)
 	return GojoToken{
 		Text: text,
 		Type: tokenType,
@@ -38,6 +36,10 @@ func (l *Lexer) NextToken() GojoToken {
 	var tok GojoToken
 
 	l.skipWhitespace()
+
+	if config.LoadConfig().MegaVerbose {
+		fmt.Printf("Current character: %c\n", l.ch)
+	}
 
 	switch l.ch {
 	case '/':
@@ -63,17 +65,17 @@ func (l *Lexer) NextToken() GojoToken {
 	case '!':
 		tok = l.readMultiCharOperator('!', TokenOperators["!"], TokenOperators["!="], TokenOperators["!=="])
 	case '<':
-		tok = l.readMultiCharOperator('<', TokenOperators["<"], TokenOperators["<="], TokenOperators["<<"])
+		tok = l.readMultiCharOperator('<', TokenOperators["<"], TokenOperators["<="], TokenOperators["<<"], TokenOperators["<<<"])
 	case '>':
-		tok = l.readMultiCharOperator('>', TokenOperators[">"], TokenOperators[">="], TokenOperators[">>"])
+		tok = l.readMultiCharOperator('>', TokenOperators[">"], TokenOperators[">="], TokenOperators[">>"], TokenOperators[">>>"])
 	case '&':
 		tok = l.readMultiCharOperator('&', TokenOperators["&"], TokenOperators["&&"])
 	case '|':
 		tok = l.readMultiCharOperator('|', TokenOperators["|"], TokenOperators["|="], TokenOperators["||"])
 	case '^':
-		tok = l.readMultiCharOperator('^', TokenOperators["^"], TokenOperators["^="], TokenOperators["^"])
+		tok = l.readMultiCharOperator('^', TokenOperators["^"], TokenOperators["^="], TokenOperators["^^"])
 	case '%':
-		tok = l.readMultiCharOperator('%', TokenOperators["%"], TokenOperators["%="], TokenOperators["%"])
+		tok = l.readMultiCharOperator('%', TokenOperators["%"], TokenOperators["%="])
 	case '.':
 		tok = l.NewToken(TokenPunctuation["."], string(l.ch))
 		if l.peekChar() == '.' && l.peekCharTwo() == '.' {
@@ -102,7 +104,7 @@ func (l *Lexer) NextToken() GojoToken {
 	case '?':
 		tok = l.NewToken(TokenPunctuation["?"], string(l.ch))
 	case '"', '\'', '`': // Handle strings with all three quote types
-		tok = l.readString(l.ch)
+		return l.readString(l.ch)
 	case 0:
 		tok = GojoToken{Type: TokenText["eof"], Text: ""}
 	default:
@@ -123,6 +125,7 @@ func (l *Lexer) NextToken() GojoToken {
 	}
 
 	l.readChar()
+
 	return tok
 }
 
@@ -219,6 +222,9 @@ func (l *Lexer) readHex(length int) string {
 }
 
 func (l *Lexer) readChar() {
+	if config.LoadConfig().MegaVerbose {
+		fmt.Println("Reading character: ", string(l.ch))
+	}
 	if l.ch == '\n' {
 		if config.LoadConfig().Verbose {
 			fmt.Println("░ Newline detected")
@@ -252,7 +258,7 @@ func (l *Lexer) peekCharTwo() byte {
 
 func (l *Lexer) readNumber() string {
 	pos := l.position
-	for isDigit(l.ch) {
+	for isDigit(l.ch) || l.ch == '.' || l.ch == 'e' || l.ch == 'E' || l.ch == '-' || l.ch == '+' {
 		l.readChar()
 	}
 	return l.input[pos:l.position]

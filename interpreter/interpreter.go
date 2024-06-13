@@ -12,7 +12,22 @@ type Interpreter struct {
 }
 
 func New() *Interpreter {
-	return &Interpreter{Env: make(map[string]interface{})}
+	interpreter := &Interpreter{Env: make(map[string]interface{})}
+	// Add built-in functions
+	interpreter.Env["console"] = map[string]interface{}{
+		"log": func(args ...interface{}) {
+			fmt.Println(args...)
+		},
+	}
+	interpreter.Env["Math"] = map[string]interface{}{
+		"sqrt": func(x float64) float64 {
+			return math.Sqrt(x)
+		},
+		"pow": func(x, y float64) float64 {
+			return math.Pow(x, y)
+		},
+	}
+	return interpreter
 }
 
 func (i *Interpreter) Interpret(program *parser.Program) {
@@ -35,6 +50,8 @@ func (i *Interpreter) evalStatement(stmt parser.Statement) {
 		for i.evalExpression(stmt.Condition).(bool) {
 			i.evalBlockStatement(stmt.Body)
 		}
+	case *parser.ExpressionStatement:
+		i.evalExpression(stmt.Expression)
 	}
 }
 
@@ -75,6 +92,22 @@ func (i *Interpreter) evalExpression(expr parser.Expression) interface{} {
 		return val
 	case *parser.CallExpression:
 		return i.evalCallExpression(expr)
+	case *parser.MemberAccessExpression:
+		object := i.evalExpression(expr.Object)
+		if object == nil {
+			fmt.Printf("Error: Object '%s' not found\n", expr.Object.String())
+			return nil
+		}
+		if objName, ok := expr.Object.(*parser.Identifier); ok && objName.Value == "console" {
+			// Handle 'console.log'
+			if expr.Property.Value == "log" {
+				return "console.log"
+			} else {
+				fmt.Printf("Error: Unsupported method '%s' for object 'console'\n", expr.Property.Value)
+				return nil
+			}
+		}
+		return object
 	case *parser.BinaryExpression:
 		leftVal := i.evalExpression(expr.Left)
 		rightVal := i.evalExpression(expr.Right)
@@ -154,15 +187,43 @@ func (i *Interpreter) evalExpression(expr parser.Expression) interface{} {
 }
 
 func (i *Interpreter) evalCallExpression(expr *parser.CallExpression) interface{} {
-	functionName := expr.Function.(*parser.Identifier).Value
+	var functionName string
+	switch fn := expr.Function.(type) {
+	case *parser.Identifier:
+		functionName = fn.Value
+	case *parser.MemberAccessExpression:
+		object := i.evalExpression(fn.Object)
+		if object == nil {
+			fmt.Printf("Error: Object '%s' not found\n", fn.Object.String())
+			return nil
+		}
+		if objName, ok := fn.Object.(*parser.Identifier); ok {
+			switch objName.Value {
+			case "console":
+				functionName = "console." + fn.Property.Value
+			case "Math":
+				functionName = "Math." + fn.Property.Value
+			default:
+				fmt.Printf("Error: Unsupported object '%s'\n", fn.Object.String())
+				return nil
+			}
+		} else {
+			fmt.Printf("Error: Unsupported object '%s'\n", fn.Object.String())
+			return nil
+		}
+	default:
+		fmt.Printf("Error: Unsupported function type '%s'\n", expr.Function.String())
+		return nil
+	}
+
 	switch functionName {
-	/**
-	 * We simply map identifiers to their corresponding golang runtime functions.
-	 * It is what it is.
-	 */
 	case "console.log":
 		args := i.evalExpressions(expr.Arguments)
-		fmt.Println(args...)
+		if logFunc, ok := i.Env["console"].(map[string]interface{})["log"].(func(...interface{})); ok {
+			logFunc(args...)
+		} else {
+			fmt.Println("Error: console.log function not found")
+		}
 		return nil
 	case "Math.sqrt":
 		if len(expr.Arguments) != 1 {
@@ -171,7 +232,7 @@ func (i *Interpreter) evalCallExpression(expr *parser.CallExpression) interface{
 		}
 		arg := i.evalExpression(expr.Arguments[0])
 		if num, ok := arg.(int64); ok {
-			return int64(math.Sqrt(float64(num)))
+			return math.Sqrt(float64(num))
 		} else {
 			fmt.Printf("Error: Math.sqrt expects a numeric argument\n")
 			return nil
@@ -185,7 +246,7 @@ func (i *Interpreter) evalCallExpression(expr *parser.CallExpression) interface{
 		exponent := i.evalExpression(expr.Arguments[1])
 		if baseNum, ok1 := base.(int64); ok1 {
 			if expNum, ok2 := exponent.(int64); ok2 {
-				return int64(math.Pow(float64(baseNum), float64(expNum)))
+				return math.Pow(float64(baseNum), float64(expNum))
 			}
 		}
 		fmt.Printf("Error: Math.pow expects numeric arguments\n")

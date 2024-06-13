@@ -9,8 +9,9 @@ var or = true || false;
 
 // Conditional Statements
 if (x > y) {
-    const result = "x greater than y"
+    const result = "x greater than y";
 } else {
-    const result = "x less than or equal to y"
+    const result = "x less than or equal to y";
 }
 
+console.log("Hello World!");
