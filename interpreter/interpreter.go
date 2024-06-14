@@ -70,7 +70,14 @@ func (i *Interpreter) evalStatement(stmt parser.Statement) {
 			i.evalBlockStatement(stmt.Body)
 		}
 	case *parser.ExpressionStatement:
-		i.evalExpression(stmt.Expression)
+		result := i.evalExpression(stmt.Expression)
+		// Print the result of the expression if in REPL mode
+		if config.LoadConfig().ReplMode {
+			if config.LoadConfig().Verbose {
+				fmt.Println("╔═══ 🌸 Repl Output:")
+			}
+			fmt.Println(result)
+		}
 	}
 }
 

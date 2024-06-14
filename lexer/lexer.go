@@ -260,11 +260,31 @@ func (l *Lexer) peekCharTwo() byte {
 }
 
 func (l *Lexer) readNumber() string {
-	pos := l.position
-	for isDigit(l.ch) || l.ch == '.' || l.ch == 'e' || l.ch == 'E' || l.ch == '-' || l.ch == '+' {
+	startPos := l.position
+	hasDecimalPoint := false
+	isScientificNotation := false
+
+	for {
+		if isDigit(l.ch) {
+			// continue reading digits
+		} else if l.ch == '.' && !hasDecimalPoint {
+			// first decimal point is valid
+			hasDecimalPoint = true
+		} else if (l.ch == 'e' || l.ch == 'E') && !isScientificNotation {
+			// scientific notation (e.g., 1e10)
+			isScientificNotation = true
+			l.readChar()
+			if l.ch == '+' || l.ch == '-' {
+				l.readChar()
+			}
+			continue
+		} else {
+			break // break on non-digit character
+		}
 		l.readChar()
 	}
-	return l.input[pos:l.position]
+
+	return l.input[startPos:l.position]
 }
 
 func (l *Lexer) readIdentifier() string {
