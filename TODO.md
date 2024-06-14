@@ -1,4 +1,77 @@
-## TODO
+# Checklist
+
+## Variable Declarations
+- [x] `var` support
+- [x] `let` support
+- [x] `const` support
+
+## Function Declarations and Calls
+- [ ] Named functions
+- [ ] Anonymous functions (function expressions)
+- [ ] Arrow functions
+
+## Control Flow
+- [x] `if` statements
+- [x] `else` statements
+- [x] `else if` statements
+- [ ] `switch` statements
+- [ ] `for` loops
+- [ ] `for...of` loops
+- [ ] `for...in` loops
+- [x] `while` loops
+- [ ] `do...while` loops
+
+## Operators
+- [x] Arithmetic operators (`+`, `-`, `*`, `/`, `%`)
+- [x] Assignment operators (`=`, `+=`, `-=`, `*=`, `/=`)
+- [x] Comparison operators (`==`, `===`, `!=`, `!==`, `<`, `>`, `<=`, `>=`)
+- [x] Logical operators (`&&`, `||`, `!`)
+- [x] Bitwise operators (`&`, `|`, `^`, `<<`, `>>`, `>>>`)
+- [ ] Unary operators (`++`, `--`, `typeof`, `delete`)
+- [ ] Ternary operator (`?:`)
+
+## Objects and Arrays
+- [ ] Object creation
+- [ ] Object property access
+- [ ] Array creation
+- [ ] Array indexing
+- [ ] Array length property
+
+## Built-in Functions and Objects
+- [x] `console.log`
+- [x] `Math` object (`Math.sqrt`, `Math.pow`, etc.)
+
+## String Manipulation
+- [x] String literals
+- [ ] String methods (`length`, `substring`, `toUpperCase`, `toLowerCase`, etc.)
+
+## Error Handling
+- [ ] `try` statements
+- [ ] `catch` statements
+- [ ] `finally` statements
+- [ ] Throwing errors
+
+## Scope and Closures
+- [ ] Lexical scoping
+- [ ] Closure support
+
+## ES6 Features
+- [ ] Template literals
+- [ ] Destructuring assignment
+- [ ] Spread/rest operators
+
+## Type Coercion and Conversion
+- [ ] Implicit type conversions
+- [ ] Explicit type conversions
+
+## Promises and Asynchronous Programming
+- [ ] Basic support for `Promise` objects
+
+## Modules (optional)
+- [ ] Basic support for `import`
+- [ ] Basic support for `export`
+
+## Notes
 
 - ~~Pointers to token type in lexer instead of copies for performance reasons~~
 - ~~Reassignments of variables~~
