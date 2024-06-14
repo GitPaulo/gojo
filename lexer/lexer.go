@@ -55,27 +55,7 @@ func (l *Lexer) NextToken() GojoToken {
 		} else {
 			tok = l.NewToken(TokenOperators["/"], string(l.ch))
 		}
-	case '=':
-		tok = l.readOperator()
-	case '+':
-		tok = l.readOperator()
-	case '-':
-		tok = l.readOperator()
-	case '*':
-		tok = l.readOperator()
-	case '!':
-		tok = l.readOperator()
-	case '<':
-		tok = l.readOperator()
-	case '>':
-		tok = l.readOperator()
-	case '&':
-		tok = l.readOperator()
-	case '|':
-		tok = l.readOperator()
-	case '^':
-		tok = l.readOperator()
-	case '%':
+	case '=', '+', '-', '*', '!', '<', '>', '&', '|', '^', '%', '?':
 		tok = l.readOperator()
 	case '.':
 		tok = l.NewToken(TokenPunctuation["."], string(l.ch))
@@ -102,8 +82,6 @@ func (l *Lexer) NextToken() GojoToken {
 		tok = l.NewToken(TokenPunctuation["["], string(l.ch))
 	case ']':
 		tok = l.NewToken(TokenPunctuation["]"], string(l.ch))
-	case '?':
-		tok = l.readOperator()
 	case '"', '\'', '`': // Handle strings with all three quote types
 		return l.readString(l.ch)
 	case 0:
