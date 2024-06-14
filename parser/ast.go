@@ -6,12 +6,30 @@ import (
 	"strings"
 )
 
-// Program is the root node of every AST.
-// It consists of a series of statements.
+/**
+ * Root Representations
+ */
+
 type Program struct {
 	Statements []Statement
 	Start      int
 	End        int
+}
+
+func (p *Program) TokenLiteral() string {
+	if len(p.Statements) > 0 {
+		return p.Statements[0].TokenLiteral()
+	} else {
+		return ""
+	}
+}
+
+func (p *Program) String() string {
+	var out strings.Builder
+	for _, s := range p.Statements {
+		out.WriteString(s.String())
+	}
+	return "Program(" + out.String() + ")"
 }
 
 type Statement interface {
@@ -37,21 +55,9 @@ type Node interface {
 	String() string
 }
 
-func (p *Program) TokenLiteral() string {
-	if len(p.Statements) > 0 {
-		return p.Statements[0].TokenLiteral()
-	} else {
-		return ""
-	}
-}
-
-func (p *Program) String() string {
-	var out strings.Builder
-	for _, s := range p.Statements {
-		out.WriteString(s.String())
-	}
-	return "Program(" + out.String() + ")"
-}
+/**
+ * AST Nodes
+ */
 
 // VariableDeclaration represents a variable declaration.
 type VariableDeclaration struct {
@@ -64,6 +70,19 @@ func (vd *VariableDeclaration) statementNode()       {}
 func (vd *VariableDeclaration) TokenLiteral() string { return vd.Token.Text }
 func (vd *VariableDeclaration) String() string {
 	return fmt.Sprintf("VariableDeclaration(%s %s = %s)", vd.Token.Type.Label, vd.Name.String(), vd.Value.String())
+}
+
+// AssignmentExpression represents a variable assignment.
+type AssignmentExpression struct {
+	Token lexer.GojoToken // The token (=)
+	Name  *Identifier
+	Value Expression
+}
+
+func (ae *AssignmentExpression) expressionNode()      {}
+func (ae *AssignmentExpression) TokenLiteral() string { return ae.Token.Text }
+func (ae *AssignmentExpression) String() string {
+	return fmt.Sprintf("AssignmentExpression(%s = %s)", ae.Name.String(), ae.Value.String())
 }
 
 // Identifier represents a variable name.
@@ -235,6 +254,7 @@ func (is *IfStatement) String() string {
 	return out + ")"
 }
 
+// WhileStatement represents a while loop.
 type WhileStatement struct {
 	Token     lexer.GojoToken
 	Condition Expression
@@ -261,6 +281,7 @@ func (es *ExpressionStatement) String() string {
 	return fmt.Sprintf("ExpressionStatement(%s)", es.Expression.String())
 }
 
+// PrefixExpression represents a prefix operation (e.g., !true).
 type PrefixExpression struct {
 	Token    lexer.GojoToken // The prefix token, e.g., "!"
 	Operator string          // The operator, e.g., "!"

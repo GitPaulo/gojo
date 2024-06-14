@@ -3,12 +3,12 @@ package lexer
 import "fmt"
 
 type GojoToken struct {
-	Type GojoTokenType // The type of the token
-	Text string        // The Text of the token
-	Line int           // The line number of the token
+	Type *GojoTokenType // The type of the token
+	Text string         // The Text of the token
+	Line int            // The line number of the token
 }
 
-func (t GojoToken) String() string {
+func (t *GojoToken) String() string {
 	return fmt.Sprintf("Token { Type: %s, Text: %q, Line: %d }", t.Type.StringInline(), t.Text, t.Line)
 }
 
@@ -19,18 +19,18 @@ type GojoTokenType struct {
 	IsLoop     bool   // Is loop
 }
 
-func (t GojoTokenType) String() string {
+func (t *GojoTokenType) String() string {
 	return fmt.Sprintf("TokenType { Label: %s, BeforeExpr: %t, StartsExpr: %t, IsLoop: %t }",
 		t.Label, t.BeforeExpr, t.StartsExpr, t.IsLoop)
 }
 
 // StringInline formats the GojoTokenType inline for better readability in nested structures.
-func (t GojoTokenType) StringInline() string {
+func (t *GojoTokenType) StringInline() string {
 	return fmt.Sprintf("Label: %s, BeforeExpr: %t, StartsExpr: %t, IsLoop: %t",
 		t.Label, t.BeforeExpr, t.StartsExpr, t.IsLoop)
 }
 
-var TokenKeywords = map[string]GojoTokenType{
+var TokenKeywords = map[string]*GojoTokenType{
 	"break":      {Label: "break", BeforeExpr: true},
 	"case":       {Label: "case", BeforeExpr: true},
 	"catch":      {Label: "catch", BeforeExpr: true},
@@ -69,7 +69,7 @@ var TokenKeywords = map[string]GojoTokenType{
 	"delete":     {Label: "delete", BeforeExpr: true, StartsExpr: true},
 }
 
-var TokenPunctuation = map[string]GojoTokenType{
+var TokenPunctuation = map[string]*GojoTokenType{
 	"(":   {Label: "(", BeforeExpr: true, StartsExpr: true},
 	")":   {Label: ")", BeforeExpr: false},
 	"{":   {Label: "{", BeforeExpr: true, StartsExpr: true},
@@ -85,7 +85,7 @@ var TokenPunctuation = map[string]GojoTokenType{
 	"...": {Label: "...", BeforeExpr: true},
 }
 
-var TokenOperators = map[string]GojoTokenType{
+var TokenOperators = map[string]*GojoTokenType{
 	"=":   {Label: "=", BeforeExpr: true},
 	"+":   {Label: "+", BeforeExpr: true, StartsExpr: true}, // Can be unary or binary
 	"-":   {Label: "-", BeforeExpr: true, StartsExpr: true}, // Can be unary or binary
@@ -114,12 +114,12 @@ var TokenOperators = map[string]GojoTokenType{
 	"??":  {Label: "??", BeforeExpr: true}, // Coalesce
 }
 
-var TokenText = map[string]GojoTokenType{
+var TokenText = map[string]*GojoTokenType{
 	"identifier": {Label: "identifier", StartsExpr: true},
 	"eof":        {Label: "eof"},
 }
 
-var TokenLiterals = map[string]GojoTokenType{
+var TokenLiterals = map[string]*GojoTokenType{
 	"number":   {Label: "number", StartsExpr: true},
 	"string":   {Label: "string", StartsExpr: true},
 	"regexp":   {Label: "regexp", StartsExpr: true},

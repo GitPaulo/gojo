@@ -24,7 +24,7 @@ func New(input string) *Lexer {
 	return l
 }
 
-func (l *Lexer) NewToken(tokenType GojoTokenType, text string) GojoToken {
+func (l *Lexer) NewToken(tokenType *GojoTokenType, text string) GojoToken {
 	return GojoToken{
 		Text: text,
 		Type: tokenType,
@@ -133,7 +133,7 @@ func (l *Lexer) NextToken() GojoToken {
  * Read methods
  */
 
-func (l *Lexer) readMultiCharOperator(expected byte, options ...GojoTokenType) GojoToken {
+func (l *Lexer) readMultiCharOperator(expected byte, options ...*GojoTokenType) GojoToken {
 	ch := string(l.ch)
 	for _, option := range options {
 		if l.peekChar() == expected {

@@ -90,6 +90,8 @@ func (i *Interpreter) evalExpression(expr parser.Expression) interface{} {
 			return nil
 		}
 		return val
+	case *parser.AssignmentExpression:
+		return i.evalAssignmentExpression(expr)
 	case *parser.CallExpression:
 		return i.evalCallExpression(expr)
 	case *parser.MemberAccessExpression:
@@ -262,6 +264,20 @@ func (i *Interpreter) evalCallExpression(expr *parser.CallExpression) interface{
 		fmt.Printf("Error: Unsupported function call '%s'\n", functionName)
 		return nil
 	}
+}
+
+func (i *Interpreter) evalAssignmentExpression(expr *parser.AssignmentExpression) interface{} {
+	_, ok := i.Env[expr.Name.Value]
+	if !ok {
+		fmt.Printf("Error (Line: %d): Variable '%s' not found\n", expr.Token.Line, expr.Name.Value)
+		return nil
+	}
+
+	val := i.evalExpression(expr.Value)
+	i.Env[expr.Name.Value] = val
+
+	fmt.Printf("%s = %v (Line: %d)\n", expr.Name.Value, val, expr.Token.Line)
+	return val
 }
 
 func (i *Interpreter) evalExpressions(exprs []parser.Expression) []interface{} {

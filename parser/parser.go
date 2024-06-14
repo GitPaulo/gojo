@@ -268,6 +268,9 @@ func (p *Parser) parseExpression(precedence int) Expression {
 		case ".":
 			p.nextToken()
 			leftExp = p.parseMemberAccessExpression(leftExp)
+		case "=":
+			p.nextToken()
+			leftExp = p.parseAssignmentExpression(leftExp)
 		default:
 			if infixPrecedence := p.peekPrecedence(); precedence < infixPrecedence {
 				p.nextToken()
@@ -382,6 +385,15 @@ func (p *Parser) parsePrefixExpression() Expression {
 	p.nextToken()
 	expression.Right = p.parseExpression(PREFIX)
 	return expression
+}
+
+func (p *Parser) parseAssignmentExpression(left Expression) Expression {
+	exp := &AssignmentExpression{Token: p.curToken, Name: left.(*Identifier)}
+
+	p.nextToken() // Move past '='
+	exp.Value = p.parseExpression(LOWEST)
+
+	return exp
 }
 
 func (p *Parser) parseIntegerLiteral() *IntegerLiteral {
