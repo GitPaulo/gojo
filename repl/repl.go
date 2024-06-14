@@ -12,7 +12,7 @@ import (
 	"github.com/peterh/liner"
 )
 
-func StartREPL(inter *interpreter.Interpreter) {
+func StartREPL(i *interpreter.Interpreter) {
 	line := liner.NewLiner()
 	defer line.Close()
 
@@ -20,9 +20,9 @@ func StartREPL(inter *interpreter.Interpreter) {
 	line.SetMultiLineMode(true)
 
 	// Load command history if it exists
-	if f, err := os.Open(".gojo_repl_history"); err == nil {
-		line.ReadHistory(f)
-		f.Close()
+	if file, err := os.Open(".gojo_repl_history"); err == nil {
+		line.ReadHistory(file)
+		file.Close()
 	}
 
 	fmt.Println("Welcome to Gojo REPL")
@@ -55,8 +55,8 @@ func StartREPL(inter *interpreter.Interpreter) {
 		line.AppendHistory(input)
 
 		// Create a lexer and parser for the input
-		lex := lexer.New(input)
-		p := parser.New(lex)
+		l := lexer.New(input)
+		p := parser.New(l)
 
 		// Parse the input to create a program AST
 		program := p.ParseProgram()
@@ -70,14 +70,14 @@ func StartREPL(inter *interpreter.Interpreter) {
 		}
 
 		// Interpret the parsed program
-		inter.InterpretREPL(program)
+		i.InterpretREPL(program)
 	}
 
 	// Save command history
-	if f, err := os.Create(".gojo_repl_history"); err != nil {
+	if file, err := os.Create(".gojo_repl_history"); err != nil {
 		fmt.Println("Error saving history:", err)
 	} else {
-		line.WriteHistory(f)
-		f.Close()
+		line.WriteHistory(file)
+		file.Close()
 	}
 }

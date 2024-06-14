@@ -15,8 +15,8 @@ func main() {
 
 	// Repl mode
 	if env.ReplMode {
-		inter := interpreter.New()
-		repl.StartREPL(inter)
+		i := interpreter.New()
+		repl.StartREPL(i)
 		return
 	}
 
@@ -35,6 +35,7 @@ func main() {
 	printInput(input)
 
 	// Initialize lexer, parser, and interpreter
+	// ✋ Note: keep all instances of these as l, p and i
 	l := lexer.New(input)
 	p := parser.New(l)
 	program := p.ParseProgram()
@@ -49,8 +50,8 @@ func main() {
 		return
 	}
 
-	inter := interpreter.New()
-	inter.Interpret(program)
+	i := interpreter.New()
+	i.Interpret(program)
 }
 
 func printInput(input string) {
