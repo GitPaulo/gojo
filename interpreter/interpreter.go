@@ -2,6 +2,7 @@ package interpreter
 
 import (
 	"fmt"
+	"gojo/config"
 	"gojo/parser"
 	"math"
 	"strconv"
@@ -31,8 +32,22 @@ func New() *Interpreter {
 }
 
 func (i *Interpreter) Interpret(program *parser.Program) {
+	fmt.Println("╔═══ 🌸 Program Output:")
 	for _, stmt := range program.Statements {
 		i.evalStatement(stmt)
+	}
+	if config.LoadConfig().Verbose {
+		fmt.Println("╔═══ 🌸 Program Environment:")
+		maxKeyLength := 0
+		for key := range i.Env {
+			if len(key) > maxKeyLength {
+				maxKeyLength = len(key)
+			}
+		}
+		formatString := fmt.Sprintf("  %%-%ds: %%v\n", maxKeyLength)
+		for key, val := range i.Env {
+			fmt.Printf(formatString, key, val)
+		}
 	}
 }
 

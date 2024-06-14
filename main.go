@@ -46,13 +46,12 @@ func main() {
 }
 
 func printInput(input string) {
-	fmt.Println("Input:")
-	fmt.Println("------")
+	fmt.Println("╔═══ Input:")
 	fmt.Println(input)
 }
 
 func printProgramDetails(program *parser.Program) {
-	fmt.Println("Program:")
+	fmt.Println("╔═══ Program:")
 	fmt.Printf("  Statements: (%d elements)\n", len(program.Statements))
 	for _, stmt := range program.Statements {
 		fmt.Printf("    - %s\n", stmt)
@@ -62,7 +61,7 @@ func printProgramDetails(program *parser.Program) {
 }
 
 func printParserErrors(p *parser.Parser) {
-	fmt.Println("Parser Errors:")
+	fmt.Println("⚠️ Parser Errors:")
 	for _, err := range p.Errors() {
 		fmt.Println(err)
 	}
