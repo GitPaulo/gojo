@@ -26,7 +26,7 @@ func StartREPL(inter *interpreter.Interpreter) {
 	}
 
 	fmt.Println("Welcome to Gojo REPL")
-	fmt.Println("Type 'exit' or 'quit' to end the REPL.")
+	fmt.Println("Type 'exit' or 'quit' to end the REPL. Type 'clear' to clear the screen.")
 
 	for {
 		input, err := line.Prompt(">>> ")
@@ -43,6 +43,12 @@ func StartREPL(inter *interpreter.Interpreter) {
 		// Check for exit command
 		if input == "exit" || input == "quit" {
 			break
+		}
+
+		// Clear
+		if input == "clear" {
+			fmt.Println("\033[H\033[2J")
+			continue
 		}
 
 		// Add input to history
