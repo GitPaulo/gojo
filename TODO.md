@@ -2,6 +2,27 @@
 
 - ~~Pointers to token type in lexer instead of copies for performance reasons~~
 - ~~Reassignments of variables~~
+- ~~Fixing infix operators generally lol~~
+- Proper function declarations and calls (no arrow functions)
+- String concatenation and interpolation (`Hello ${name}`)
+- What happens if you try to use operators on the wrong types?
+- Making `const` actually constant. Currently it's just a keyword that doesn't do anything.
+- `else if` statements
+- `for` loops
+  - for loops
+  - for...in loops
+  - for...of loops
+- Basic array support?
+  - Accessing array elements (arr[index])
+  - Array methods (push, pop, shift, unshift)
+- Basic json support?
+  - Accessing object properties (obj.prop and obj["prop"])
+  - Adding properties to objects
 - Instead storing line number and text in token structs just store positions in input and look them as needed?
 - Some sort of block scope. Perhaps change `env` to a stack of environments (scopes)?
-- Fixing infix operators generally lol
+  - Block scope (for let and const)
+  - Function scope
+  - Global scope
+- `...` spread and rest operators
+    - Spread operator for arrays and objects (...)
+    - Rest parameters in function definitions

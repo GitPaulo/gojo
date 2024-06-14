@@ -14,37 +14,28 @@ Use environment variables to configure the engine.
 
 ### Tests
 
+To run lexer, parser and interpreter tests:
+
 ```sh
-go test tests/<test>
+go test ./...
 ```
 
 ## Checkpoints
 
-> Yo! This is for learning purposes and not intended to ever be finished.
+> Yo! This is a for fun project and not intended to ever be finished. o7
 
-- Lexer (FSM): Meh compliance with the ECMAScript spec.
-- Parser (Recursive Descent): 
-  - Variables 
-  - Literals: Integers Booleans Strings 
-  - Binary expressions 
-  - Grouped expressions 
-  - If/Else statements 
-  - Basic Function declarations 
-  - Block statements 
-  - While statements
-- Interpreter (& Go Runtime):
-  - Sets variable declarations of above types
-  - Evaluates Simple Binary expressions (+, -, *, /)
-  - Call expressions and translates the following to go runtime:
-    - `console.log, Math.sqrt, Math.pow, typeof`
+The goal is to have a resonably fast and correct javascript engine for the core features of the language only.
+
+Checkout the [TODO.md](TODO.md).
 
 ## Parts by example:
 
 For the code `var x = 1 + 1;`
 
-1. Lexer: Produces a stream of tokens `var, x, =, 1, +, 1, ;`
-2. Parser: Produces an AST `Program -> Statements[] -> VariableDeclaration(x = BinaryExpression(1 + 1))`
-3. Interpreter: Process the AST and stores the value in the environment `x = 2`
+1. Lexer (FSM): Produces a stream of tokens `var, x, =, 1, +, 1, ;`
+2. Parser (Recursive Descent): Produces an AST `Program -> Statements[] -> VariableDeclaration(x = 
+   BinaryExpression(1 + 1))`
+3. Interpreter (Go Runtime): Process the AST and stores the value in the environment `x = 2`
 
 ![img.png](img.png)
 

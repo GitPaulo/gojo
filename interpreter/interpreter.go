@@ -132,18 +132,29 @@ func (i *Interpreter) evalExpression(expr parser.Expression) interface{} {
 			if leftOk && rightOk {
 				return leftInt + rightInt
 			}
+			leftStr, leftOk := leftVal.(string)
+			rightStr, rightOk := rightVal.(string)
+			if leftOk && rightOk {
+				return leftStr + rightStr
+			}
+			fmt.Println("Error: Invalid types for + operation")
+			return nil
 		case "-":
 			leftInt, leftOk := leftVal.(int64)
 			rightInt, rightOk := rightVal.(int64)
 			if leftOk && rightOk {
 				return leftInt - rightInt
 			}
+			fmt.Println("Error: Invalid types for - operation")
+			return nil
 		case "*":
 			leftInt, leftOk := leftVal.(int64)
 			rightInt, rightOk := rightVal.(int64)
 			if leftOk && rightOk {
 				return leftInt * rightInt
 			}
+			fmt.Println("Error: Invalid types for * operation")
+			return nil
 		case "/":
 			leftInt, leftOk := leftVal.(int64)
 			rightInt, rightOk := rightVal.(int64)
@@ -155,47 +166,146 @@ func (i *Interpreter) evalExpression(expr parser.Expression) interface{} {
 					return nil
 				}
 			}
+			fmt.Println("Error: Invalid types for / operation")
+			return nil
+		case "%":
+			leftInt, leftOk := leftVal.(int64)
+			rightInt, rightOk := rightVal.(int64)
+			if leftOk && rightOk {
+				return leftInt % rightInt
+			}
+			fmt.Println("Error: Invalid types for % operation")
+			return nil
 		case "<":
 			leftInt, leftOk := leftVal.(int64)
 			rightInt, rightOk := rightVal.(int64)
 			if leftOk && rightOk {
 				return leftInt < rightInt
 			}
+			leftStr, leftOk := leftVal.(string)
+			rightStr, rightOk := rightVal.(string)
+			if leftOk && rightOk {
+				return leftStr < rightStr
+			}
+			fmt.Println("Error: Invalid types for < operation")
+			return nil
 		case ">":
 			leftInt, leftOk := leftVal.(int64)
 			rightInt, rightOk := rightVal.(int64)
 			if leftOk && rightOk {
 				return leftInt > rightInt
 			}
+			leftStr, leftOk := leftVal.(string)
+			rightStr, rightOk := rightVal.(string)
+			if leftOk && rightOk {
+				return leftStr > rightStr
+			}
+			fmt.Println("Error: Invalid types for > operation")
+			return nil
+		case "<=":
+			leftInt, leftOk := leftVal.(int64)
+			rightInt, rightOk := rightVal.(int64)
+			if leftOk && rightOk {
+				return leftInt <= rightInt
+			}
+			leftStr, leftOk := leftVal.(string)
+			rightStr, rightOk := rightVal.(string)
+			if leftOk && rightOk {
+				return leftStr <= rightStr
+			}
+			fmt.Println("Error: Invalid types for <= operation")
+			return nil
+		case ">=":
+			leftInt, leftOk := leftVal.(int64)
+			rightInt, rightOk := rightVal.(int64)
+			if leftOk && rightOk {
+				return leftInt >= rightInt
+			}
+			leftStr, leftOk := leftVal.(string)
+			rightStr, rightOk := rightVal.(string)
+			if leftOk && rightOk {
+				return leftStr >= rightStr
+			}
+			fmt.Println("Error: Invalid types for >= operation")
+			return nil
 		case "==":
 			return leftVal == rightVal
 		case "!=":
+			return leftVal != rightVal
+		case "===":
+			return leftVal == rightVal
+		case "!==":
 			return leftVal != rightVal
 		case "&&":
 			leftBool, leftOk := leftVal.(bool)
 			rightBool, rightOk := rightVal.(bool)
 			if leftOk && rightOk {
 				return leftBool && rightBool
-			} else {
-				fmt.Println("Error: Invalid types for && operation")
-				return nil
 			}
+			fmt.Println("Error: Invalid types for && operation")
+			return nil
 		case "||":
 			leftBool, leftOk := leftVal.(bool)
 			rightBool, rightOk := rightVal.(bool)
 			if leftOk && rightOk {
 				return leftBool || rightBool
-			} else {
-				fmt.Println("Error: Invalid types for || operation")
-				return nil
 			}
+			fmt.Println("Error: Invalid types for || operation")
+			return nil
+		case "&":
+			leftInt, leftOk := leftVal.(int64)
+			rightInt, rightOk := rightVal.(int64)
+			if leftOk && rightOk {
+				return leftInt & rightInt
+			}
+			fmt.Println("Error: Invalid types for & operation")
+			return nil
+		case "|":
+			leftInt, leftOk := leftVal.(int64)
+			rightInt, rightOk := rightVal.(int64)
+			if leftOk && rightOk {
+				return leftInt | rightInt
+			}
+			fmt.Println("Error: Invalid types for | operation")
+			return nil
+		case "^":
+			leftInt, leftOk := leftVal.(int64)
+			rightInt, rightOk := rightVal.(int64)
+			if leftOk && rightOk {
+				return leftInt ^ rightInt
+			}
+			fmt.Println("Error: Invalid types for ^ operation")
+			return nil
+		case "<<":
+			leftInt, leftOk := leftVal.(int64)
+			rightInt, rightOk := rightVal.(int64)
+			if leftOk && rightOk {
+				return leftInt << rightInt
+			}
+			fmt.Println("Error: Invalid types for << operation")
+			return nil
+		case ">>":
+			leftInt, leftOk := leftVal.(int64)
+			rightInt, rightOk := rightVal.(int64)
+			if leftOk && rightOk {
+				return leftInt >> rightInt
+			}
+			fmt.Println("Error: Invalid types for >> operation")
+			return nil
+		case ">>>":
+			leftInt, leftOk := leftVal.(int64)
+			rightInt, rightOk := rightVal.(int64)
+			if leftOk && rightOk {
+				return int64(uint64(leftInt) >> uint64(rightInt))
+			}
+			fmt.Println("Error: Invalid types for >>> operation")
+			return nil
 		default:
 			fmt.Printf("Error: Unsupported operator '%s'\n", expr.Operator)
 			return nil
 		}
 	default:
 		fmt.Println("Error: Unsupported expression type", expr)
-		return nil
 	}
 	return nil
 }
