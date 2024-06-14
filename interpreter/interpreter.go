@@ -72,6 +72,8 @@ func (i *Interpreter) evalStatement(stmt parser.Statement) {
 		if stmt.IsConstant {
 			i.Constants[stmt.Name.Value] = true
 		}
+	case *parser.FunctionDeclaration:
+		i.Env[stmt.Name.Value] = stmt
 	case *parser.IfStatement:
 		i.evalIfStatement(stmt)
 	case *parser.WhileStatement:
@@ -411,6 +413,29 @@ func (i *Interpreter) evalCallExpression(expr *parser.CallExpression) interface{
 		arg := i.evalExpression(expr.Arguments[0])
 		return fmt.Sprintf("%T", arg)
 	default:
+		// Check if it's a user-defined function
+		if function, ok := i.Env[functionName]; ok {
+			if funcDecl, ok := function.(*parser.FunctionDeclaration); ok {
+				// TODO: Probably improve this with stack based environment
+				// Create a new environment for the function call
+				newEnv := make(map[string]interface{})
+				for k, v := range i.Env {
+					newEnv[k] = v
+				}
+
+				for idx, param := range funcDecl.Parameters {
+					newEnv[param.Value] = i.evalExpression(expr.Arguments[idx])
+				}
+
+				originalEnv := i.Env
+				i.Env = newEnv
+				i.evalBlockStatement(funcDecl.Body)
+				i.Env = originalEnv
+
+				return nil // TODO: This should probably return the result of evalBlockStatement?
+			}
+		}
+
 		fmt.Printf("Error: Unsupported function call '%s'\n", functionName)
 		return nil
 	}
