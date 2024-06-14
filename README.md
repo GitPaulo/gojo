@@ -2,9 +2,8 @@
 
 Go javascript engine.
 
-```
+```sh
 go run main.go
-go test ./...
 ```
 
 Use environment variables to configure the engine.
@@ -12,6 +11,12 @@ Use environment variables to configure the engine.
 - `GOJO_INPUT_FILE` - Set file path to use it as input (`default=input_program.js`).
 - `GOJO_VERBOSE` - Set to `true` to enable verbose logging.
 - `GOJO_MEGA_VERBOSE` - Set to `true` to enable EVEN MORE logging.
+
+### Tests
+
+```sh
+go test tests/<test>
+```
 
 ## Checkpoints
 
