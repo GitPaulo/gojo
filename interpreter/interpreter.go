@@ -51,6 +51,13 @@ func (i *Interpreter) Interpret(program *parser.Program) {
 	}
 }
 
+// InterpretREPL is used to interpret a single line of input in the REPL.
+func (i *Interpreter) InterpretREPL(program *parser.Program) {
+	for _, stmt := range program.Statements {
+		i.evalStatement(stmt)
+	}
+}
+
 func (i *Interpreter) evalStatement(stmt parser.Statement) {
 	switch stmt := stmt.(type) {
 	case *parser.VariableDeclaration:

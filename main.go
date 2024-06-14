@@ -6,11 +6,19 @@ import (
 	"gojo/interpreter"
 	"gojo/lexer"
 	"gojo/parser"
+	"gojo/repl"
 	"os"
 )
 
 func main() {
 	env := config.LoadConfig()
+
+	// Repl mode
+	if env.ReplMode {
+		inter := interpreter.New()
+		repl.StartREPL(inter)
+		return
+	}
 
 	// Input through input_program.js
 	inputFile := env.InputFile
