@@ -215,14 +215,37 @@ func (p *Parser) parseIfStatement() *IfStatement {
 
 	stmt.Consequence = p.parseBlockStatement()
 
-	if p.peekTokenIs("else") {
-		p.nextToken()
+	for p.peekTokenIs("else") {
+		p.nextToken() // consume 'else'
 
-		if !p.expectPeek("{") {
-			return nil
+		if p.peekTokenIs("if") {
+			p.nextToken() // consume 'if'
+			elseIfStmt := &IfStatement{Token: p.curToken}
+
+			if !p.expectPeek("(") {
+				return nil
+			}
+
+			p.nextToken()
+			elseIfStmt.Condition = p.parseExpression(LOWEST)
+
+			if !p.expectPeek(")") {
+				return nil
+			}
+
+			if !p.expectPeek("{") {
+				return nil
+			}
+
+			elseIfStmt.Consequence = p.parseBlockStatement()
+			stmt.Alternative = &BlockStatement{
+				Token:      p.curToken,
+				Statements: []Statement{elseIfStmt},
+			}
+		} else if p.peekTokenIs("{") {
+			p.nextToken() // consume '{'
+			stmt.Alternative = p.parseBlockStatement()
 		}
-
-		stmt.Alternative = p.parseBlockStatement()
 	}
 
 	return stmt

@@ -1,21 +1,22 @@
 // Variables & Arithmetic
 var x = 1;
 var y = 1 + 1;
-var z = x + y;
-
-// Boolean Logic
-var and = true && false;
-var or = true || false;
 
 // Conditional Statements
 if (x > y) {
-    const result = "x greater than y";
+    console.log("x greater than y")
+} else if (x < y) {
+    console.log("x less than or equal to y")
 } else {
-    const result = "x less than or equal to y";
+    console.log("x equal to y")
 }
 
+// Boolean Operators
+console.log(true && false);
+console.log(true || false);
+
 // While Loop
-var i = 0;
+let i = 0;
 while (i < 5) {
     console.log("while loop!");
     i = i + 1;

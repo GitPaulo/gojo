@@ -72,7 +72,12 @@ func (i *Interpreter) evalIfStatement(stmt *parser.IfStatement) {
 	if condition.(bool) {
 		i.evalBlockStatement(stmt.Consequence)
 	} else if stmt.Alternative != nil {
-		i.evalBlockStatement(stmt.Alternative)
+		switch alt := stmt.Alternative.Statements[0].(type) {
+		case *parser.IfStatement:
+			i.evalIfStatement(alt)
+		default:
+			i.evalBlockStatement(stmt.Alternative)
+		}
 	}
 }
 

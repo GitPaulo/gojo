@@ -3,11 +3,12 @@
 - ~~Pointers to token type in lexer instead of copies for performance reasons~~
 - ~~Reassignments of variables~~
 - ~~Fixing infix operators generally lol~~
+- `===` triple operators seem to be broken
 - Proper function declarations and calls (no arrow functions)
 - String concatenation and interpolation (`Hello ${name}`)
 - What happens if you try to use operators on the wrong types?
 - Making `const` actually constant. Currently it's just a keyword that doesn't do anything.
-- `else if` statements
+- ~~`else if` statements~~
 - `for` loops
   - for loops
   - for...in loops
