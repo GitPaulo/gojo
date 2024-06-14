@@ -1,0 +1,17 @@
+var a = 2++;
+var b = ++16;
+a += 5;
+var c = a == b;
+var d = a != b;
+var e = a !==b;
+var f = a === b;
+var g = a <= b;
+var h = a >= b;
+var i = a&&b;
+var j = a || b;
+var k = a << b;
+var l = a >> b;
+var m = a >>> b;
+var n = a ** b;
+var o = a ?? b;
+var p = a?.b;

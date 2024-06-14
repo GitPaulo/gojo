@@ -8,7 +8,7 @@ type GojoToken struct {
 	Line int            // The line number of the token
 }
 
-func (t *GojoToken) String() string {
+func (t GojoToken) String() string {
 	return fmt.Sprintf("Token { Type: %-10s  Line: %2d Text: %-10q }", t.Type.Label, t.Line, t.Text)
 }
 
@@ -19,14 +19,14 @@ type GojoTokenType struct {
 	IsLoop     bool   // Is loop
 }
 
-func (t *GojoTokenType) String() string {
-	return fmt.Sprintf("TokenType { Label: %s, BeforeExpr: %t, StartsExpr: %t, IsLoop: %t }",
+func (t GojoTokenType) String() string {
+	return fmt.Sprintf("TokenType { Label: %s, testBeforeExpr: %t, StartsExpr: %t, IsLoop: %t }",
 		t.Label, t.BeforeExpr, t.StartsExpr, t.IsLoop)
 }
 
 // StringInline formats the GojoTokenType inline for better readability in nested structures.
-func (t *GojoTokenType) StringInline() string {
-	return fmt.Sprintf("Label: %s, BeforeExpr: %t, StartsExpr: %t, IsLoop: %t",
+func (t GojoTokenType) StringInline() string {
+	return fmt.Sprintf("Label: %s, test2BeforeExpr: %t, StartsExpr: %t, IsLoop: %t",
 		t.Label, t.BeforeExpr, t.StartsExpr, t.IsLoop)
 }
 
@@ -80,7 +80,6 @@ var TokenPunctuation = map[string]*GojoTokenType{
 	";":   {Label: ";", BeforeExpr: false},
 	":":   {Label: ":", BeforeExpr: false},
 	".":   {Label: ".", BeforeExpr: true, StartsExpr: true},
-	"?":   {Label: "?", BeforeExpr: true, StartsExpr: true},
 	"=>":  {Label: "=>", BeforeExpr: true},
 	"...": {Label: "...", BeforeExpr: true},
 }
@@ -114,6 +113,8 @@ var TokenOperators = map[string]*GojoTokenType{
 	"%":   {Label: "%", BeforeExpr: true},   // Modulo
 	"**":  {Label: "**", BeforeExpr: true},
 	"??":  {Label: "??", BeforeExpr: true}, // Coalesce
+	"?":   {Label: "?", BeforeExpr: true, StartsExpr: true},
+	"?.":  {Label: "?.", BeforeExpr: true},
 }
 
 var TokenText = map[string]*GojoTokenType{

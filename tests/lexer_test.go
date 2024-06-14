@@ -33,236 +33,156 @@ func CompareLexerOutput(t *testing.T, test LexerTestCase) {
 
 	lexer := New(string(data))
 	for i, expectedToken := range test.Expected {
-		token := lexer.NextToken()
+		var token GojoToken = lexer.NextToken()
 		if token.Type != expectedToken.Type || token.Text != expectedToken.Text {
-			t.Fatalf("Token %2d: \nExpected: %v\nReceived: %v\n", i, expectedToken, token)
+			t.Errorf("Token %2d: \nExpected: %v\nReceived: %v\n", i, expectedToken, token)
 		} else {
 			t.Logf("Token %2d: %v", i, token)
 		}
 	}
 }
 
+func NewToken(tokenTypeStr string, text ...string) GojoToken {
+	tokenMaps := []map[string]*GojoTokenType{
+		TokenKeywords,
+		TokenPunctuation,
+		TokenOperators,
+		TokenText,
+		TokenLiterals,
+	}
+	var tokenType *GojoTokenType
+	var tokenExists bool = false
+
+	for _, tokenMap := range tokenMaps {
+		tokenType, tokenExists = tokenMap[tokenTypeStr]
+		if tokenExists {
+			tokenText := tokenTypeStr
+			if len(text) > 0 {
+				tokenText = text[0]
+			}
+			return GojoToken{
+				Text: tokenText,
+				Type: tokenType,
+			}
+		}
+	}
+	panic("Token not found")
+}
+
+func NewNumber(number string) GojoToken {
+	return NewToken("number", number)
+}
+
+func NewID(id string) GojoToken {
+	return NewToken("identifier", id)
+}
+
+func NewString(str string) GojoToken {
+	return NewToken("string", str)
+}
+
 var lexerTestCases = []LexerTestCase{
 	// Test variable declarations and basic arithmetic operations
 	{
-		Name: "Test1",
+		Name: "VariablesAndArithmetic",
 		Expected: []GojoToken{
-			{Type: TokenKeywords["var"], Text: "var"},
-			{Type: TokenText["identifier"], Text: "x"},
-			{Type: TokenOperators["="], Text: "="},
-			{Type: TokenLiterals["number"], Text: "5"},
-			{Type: TokenPunctuation[";"], Text: ";"},
-			{Type: TokenKeywords["var"], Text: "var"},
-			{Type: TokenText["identifier"], Text: "y"},
-			{Type: TokenOperators["="], Text: "="},
-			{Type: TokenLiterals["number"], Text: "10"},
-			{Type: TokenPunctuation[";"], Text: ";"},
-			{Type: TokenKeywords["var"], Text: "var"},
-			{Type: TokenText["identifier"], Text: "z"},
-			{Type: TokenOperators["="], Text: "="},
-			{Type: TokenText["identifier"], Text: "x"},
-			{Type: TokenOperators["+"], Text: "+"},
-			{Type: TokenText["identifier"], Text: "y"},
-			{Type: TokenPunctuation[";"], Text: ";"},
+			NewToken("var"), NewID("x"), NewToken("="), NewNumber("5"), NewToken(";"),
+			NewToken("var"), NewID("y"), NewToken("="), NewNumber("10"), NewToken(";"),
+			NewToken("var"), NewID("z"), NewToken("="), NewID("x"), NewToken("+"), NewID("y"), NewToken(";"),
 		},
 	},
-	// Test function declaration and call
 	{
-		Name: "Test2",
+		Name: "Functions",
 		Expected: []GojoToken{
-			{Type: TokenKeywords["function"], Text: "function"},
-			{Type: TokenText["identifier"], Text: "add"},
-			{Type: TokenPunctuation["("], Text: "("},
-			{Type: TokenText["identifier"], Text: "a"},
-			{Type: TokenPunctuation[","], Text: ","},
-			{Type: TokenText["identifier"], Text: "b"},
-			{Type: TokenPunctuation[")"], Text: ")"},
-			{Type: TokenPunctuation["{"], Text: "{"},
-			{Type: TokenKeywords["return"], Text: "return"},
-			{Type: TokenText["identifier"], Text: "a"},
-			{Type: TokenOperators["+"], Text: "+"},
-			{Type: TokenText["identifier"], Text: "b"},
-			{Type: TokenPunctuation[";"], Text: ";"},
-			{Type: TokenPunctuation["}"], Text: "}"},
-			{Type: TokenKeywords["var"], Text: "var"},
-			{Type: TokenText["identifier"], Text: "result"},
-			{Type: TokenOperators["="], Text: "="},
-			{Type: TokenText["identifier"], Text: "add"},
-			{Type: TokenPunctuation["("], Text: "("},
-			{Type: TokenLiterals["number"], Text: "5"},
-			{Type: TokenPunctuation[","], Text: ","},
-			{Type: TokenLiterals["number"], Text: "10"},
-			{Type: TokenPunctuation[")"], Text: ")"},
-			{Type: TokenPunctuation[";"], Text: ";"},
+			NewToken("function"), NewID("add"), NewToken("("), NewID("a"), NewToken(","), NewID("b"), NewToken(")"), NewToken("{"),
+			NewToken("return"), NewID("a"), NewToken("+"), NewID("b"), NewToken(";"),
+			NewToken("}"),
+			NewToken("var"), NewID("result"), NewToken("="), NewID("add"), NewToken("("), NewNumber("5"), NewToken(","), NewNumber("10"), NewToken(")"), NewToken(";"),
 		},
 	},
-	// Test for loop and conditionals
 	{
-		Name: "Test3",
+		Name: "LoopsAndConditionals",
 		Expected: []GojoToken{
-			{Type: TokenKeywords["for"], Text: "for"},
-			{Type: TokenPunctuation["("], Text: "("},
-			{Type: TokenKeywords["var"], Text: "var"},
-			{Type: TokenText["identifier"], Text: "i"},
-			{Type: TokenOperators["="], Text: "="},
-			{Type: TokenLiterals["number"], Text: "0"},
-			{Type: TokenPunctuation[";"], Text: ";"},
-			{Type: TokenText["identifier"], Text: "i"},
-			{Type: TokenOperators["<"], Text: "<"},
-			{Type: TokenLiterals["number"], Text: "10"},
-			{Type: TokenPunctuation[";"], Text: ";"},
-			{Type: TokenText["identifier"], Text: "i"},
-			{Type: TokenOperators["++"], Text: "++"},
-			{Type: TokenPunctuation[")"], Text: ")"},
-			{Type: TokenPunctuation["{"], Text: "{"},
-			{Type: TokenKeywords["if"], Text: "if"},
-			{Type: TokenPunctuation["("], Text: "("},
-			{Type: TokenText["identifier"], Text: "i"},
-			{Type: TokenOperators["%"], Text: "%"},
-			{Type: TokenLiterals["number"], Text: "2"},
-			{Type: TokenOperators["=="], Text: "=="},
-			{Type: TokenLiterals["number"], Text: "0"},
-			{Type: TokenPunctuation[")"], Text: ")"},
-			{Type: TokenPunctuation["{"], Text: "{"},
-			{Type: TokenKeywords["continue"], Text: "continue"},
-			{Type: TokenPunctuation[";"], Text: ";"},
-			{Type: TokenPunctuation["}"], Text: "}"},
-			{Type: TokenKeywords["else"], Text: "else"},
-			{Type: TokenPunctuation["{"], Text: "{"},
-			{Type: TokenKeywords["break"], Text: "break"},
-			{Type: TokenPunctuation[";"], Text: ";"},
-			{Type: TokenPunctuation["}"], Text: "}"},
-			{Type: TokenPunctuation["}"], Text: "}"},
+			NewToken("for"), NewToken("("), NewToken("var"), NewID("i"), NewToken("="), NewNumber("0"), NewToken(";"),
+			NewID("i"), NewToken("<"), NewNumber("10"), NewToken(";"), NewID("i"), NewToken("++"), NewToken(")"), NewToken("{"),
+			NewToken("if"), NewToken("("), NewID("i"), NewToken("%"), NewNumber("2"), NewToken("=="), NewNumber("0"), NewToken(")"), NewToken("{"),
+			NewToken("continue"), NewToken(";"),
+			NewToken("}"), NewToken("else"), NewToken("{"),
+			NewToken("break"), NewToken(";"),
+			NewToken("}"),
+			NewToken("}"),
 		},
 	},
-	// Test string literals and escape sequences
 	{
-		Name: "Test4",
+		Name: "Strings",
 		Expected: []GojoToken{
-			{Type: TokenKeywords["var"], Text: "var"},
-			{Type: TokenText["identifier"], Text: "str"},
-			{Type: TokenOperators["="], Text: "="},
-			{Type: TokenLiterals["string"], Text: "Hello, world!\n"},
-			{Type: TokenPunctuation[";"], Text: ";"},
-			{Type: TokenKeywords["var"], Text: "var"},
-			{Type: TokenText["identifier"], Text: "escapedStr"},
-			{Type: TokenOperators["="], Text: "="},
-			{Type: TokenLiterals["string"], Text: "This is a \"quoted\" string."},
-			{Type: TokenPunctuation[";"], Text: ";"},
+			NewToken("var"), NewID("str"), NewToken("="), NewString("Hello, world!\n"), NewToken(";"),
+			NewToken("var"), NewID("escapedStr"), NewToken("="), NewString("This is a \"quoted\" string."), NewToken(";"),
 		},
 	},
-	// Test boolean literals and logical operators
 	{
-		Name: "Test5",
+		Name: "Booleans",
 		Expected: []GojoToken{
-			{Type: TokenKeywords["var"], Text: "var"},
-			{Type: TokenText["identifier"], Text: "a"},
-			{Type: TokenOperators["="], Text: "="},
-			{Type: TokenKeywords["true"], Text: "true"},
-			{Type: TokenOperators["&&"], Text: "&&"},
-			{Type: TokenKeywords["false"], Text: "false"},
-			{Type: TokenOperators["||"], Text: "||"},
-			{Type: TokenOperators["!"], Text: "!"},
-			{Type: TokenKeywords["true"], Text: "true"},
-			{Type: TokenPunctuation[";"], Text: ";"},
-			{Type: TokenKeywords["var"], Text: "var"},
-			{Type: TokenText["identifier"], Text: "b"},
-			{Type: TokenOperators["="], Text: "="},
-			{Type: TokenOperators["!"], Text: "!"},
-			{Type: TokenOperators["!"], Text: "!"},
-			{Type: TokenText["identifier"], Text: "a"},
-			{Type: TokenPunctuation[";"], Text: ";"},
+			NewToken("var"), NewID("a"), NewToken("="), NewToken("true"), NewToken("&&"), NewToken("false"), NewToken("||"), NewToken("!"), NewToken("true"), NewToken(";"),
+			NewToken("var"), NewID("b"), NewToken("="), NewToken("!"), NewToken("!"), NewID("a"), NewToken(";"),
 		},
 	},
-	// Test object literals
 	{
-		Name: "Test6",
+		Name: "Objects",
 		Expected: []GojoToken{
-			{Type: TokenKeywords["var"], Text: "var"},
-			{Type: TokenText["identifier"], Text: "obj"},
-			{Type: TokenOperators["="], Text: "="},
-			{Type: TokenPunctuation["{"], Text: "{"},
-			{Type: TokenText["identifier"], Text: "key1"},
-			{Type: TokenPunctuation[":"], Text: ":"},
-			{Type: TokenLiterals["string"], Text: "value1"},
-			{Type: TokenPunctuation[","], Text: ","},
-			{Type: TokenText["identifier"], Text: "key2"},
-			{Type: TokenPunctuation[":"], Text: ":"},
-			{Type: TokenLiterals["number"], Text: "42"},
-			{Type: TokenPunctuation[","], Text: ","},
-			{Type: TokenText["identifier"], Text: "key3"},
-			{Type: TokenPunctuation[":"], Text: ":"},
-			{Type: TokenKeywords["true"], Text: "true"},
-			{Type: TokenPunctuation["}"], Text: "}"},
-			{Type: TokenPunctuation[";"], Text: ";"},
+			NewToken("var"), NewID("obj"), NewToken("="), NewToken("{"),
+			NewID("key1"), NewToken(":"), NewString("value1"), NewToken(","),
+			NewID("key2"), NewToken(":"), NewNumber("42"), NewToken(","),
+			NewID("key3"), NewToken(":"), NewToken("true"),
+			NewToken("}"), NewToken(";"),
 		},
 	},
-	// Test array literals and access
 	{
-		Name: "Test7",
+		Name: "Arrays",
 		Expected: []GojoToken{
-			{Type: TokenKeywords["var"], Text: "var"},
-			{Type: TokenText["identifier"], Text: "arr"},
-			{Type: TokenOperators["="], Text: "="},
-			{Type: TokenPunctuation["["], Text: "["},
-			{Type: TokenLiterals["number"], Text: "1"},
-			{Type: TokenPunctuation[","], Text: ","},
-			{Type: TokenLiterals["number"], Text: "2"},
-			{Type: TokenPunctuation[","], Text: ","},
-			{Type: TokenLiterals["number"], Text: "3"},
-			{Type: TokenPunctuation["]"], Text: "]"},
-			{Type: TokenPunctuation[";"], Text: ";"},
-			{Type: TokenKeywords["var"], Text: "var"},
-			{Type: TokenText["identifier"], Text: "first"},
-			{Type: TokenOperators["="], Text: "="},
-			{Type: TokenText["identifier"], Text: "arr"},
-			{Type: TokenPunctuation["["], Text: "["},
-			{Type: TokenLiterals["number"], Text: "0"},
-			{Type: TokenPunctuation["]"], Text: "]"},
-			{Type: TokenPunctuation[";"], Text: ";"},
+			NewToken("var"), NewID("arr"), NewToken("="), NewToken("["), NewNumber("1"), NewToken(","), NewNumber("2"), NewToken(","), NewNumber("3"), NewToken("]"), NewToken(";"),
+			NewToken("var"), NewID("first"), NewToken("="), NewID("arr"), NewToken("["), NewNumber("0"), NewToken("]"), NewToken(";"),
 		},
 	},
-	// Test class declaration
 	{
-		Name: "Test8",
+		Name: "ClassDeclaration",
 		Expected: []GojoToken{
-			{Type: TokenKeywords["class"], Text: "class"},
-			{Type: TokenText["identifier"], Text: "Person"},
-			{Type: TokenPunctuation["{"], Text: "{"},
-			{Type: TokenText["identifier"], Text: "constructor"},
-			{Type: TokenPunctuation["("], Text: "("},
-			{Type: TokenText["identifier"], Text: "name"},
-			{Type: TokenPunctuation[")"], Text: ")"},
-			{Type: TokenPunctuation["{"], Text: "{"},
-			{Type: TokenKeywords["this"], Text: "this"},
-			{Type: TokenPunctuation["."], Text: "."},
-			{Type: TokenText["identifier"], Text: "name"},
-			{Type: TokenOperators["="], Text: "="},
-			{Type: TokenText["identifier"], Text: "name"},
-			{Type: TokenPunctuation[";"], Text: ";"},
-			{Type: TokenPunctuation["}"], Text: "}"},
-			{Type: TokenText["identifier"], Text: "getName"},
-			{Type: TokenPunctuation["("], Text: "("},
-			{Type: TokenPunctuation[")"], Text: ")"},
-			{Type: TokenPunctuation["{"], Text: "{"},
-			{Type: TokenKeywords["return"], Text: "return"},
-			{Type: TokenKeywords["this"], Text: "this"},
-			{Type: TokenPunctuation["."], Text: "."},
-			{Type: TokenText["identifier"], Text: "name"},
-			{Type: TokenPunctuation[";"], Text: ";"},
-			{Type: TokenPunctuation["}"], Text: "}"},
-			{Type: TokenPunctuation["}"], Text: "}"},
+			NewToken("class"), NewID("Person"), NewToken("{"),
+			NewID("constructor"), NewToken("("), NewID("name"), NewToken(")"), NewToken("{"),
+			NewToken("this"), NewToken("."), NewID("name"), NewToken("="), NewID("name"), NewToken(";"),
+			NewToken("}"),
+			NewID("getName"), NewToken("("), NewToken(")"), NewToken("{"),
+			NewToken("return"), NewToken("this"), NewToken("."), NewID("name"), NewToken(";"),
+			NewToken("}"),
+			NewToken("}"),
 		},
 	},
-	// Test regular expressions
 	{
-		Name: "Test9",
+		Name: "Regexp",
 		Expected: []GojoToken{
-			{Type: TokenKeywords["var"], Text: "var"},
-			{Type: TokenText["identifier"], Text: "regex"},
-			{Type: TokenOperators["="], Text: "="},
-			{Type: TokenLiterals["regexp"], Text: "/ab+c/"},
-			{Type: TokenPunctuation[";"], Text: ";"},
+			NewToken("var"), NewID("regex"), NewToken("="), NewToken("regexp", "/ab+c/"), NewToken(";"),
+		},
+	},
+	{
+		Name: "MultiCharacterOperators",
+		Expected: []GojoToken{
+			NewToken("var"), NewID("a"), NewToken("="), NewNumber("2"), NewToken("++"), NewToken(";"),
+			NewToken("var"), NewID("b"), NewToken("="), NewToken("++"), NewNumber("16"), NewToken(";"),
+			NewID("a"), NewToken("+="), NewNumber("5"), NewToken(";"),
+			NewToken("var"), NewID("c"), NewToken("="), NewID("a"), NewToken("=="), NewID("b"), NewToken(";"),
+			NewToken("var"), NewID("d"), NewToken("="), NewID("a"), NewToken("!="), NewID("b"), NewToken(";"),
+			NewToken("var"), NewID("e"), NewToken("="), NewID("a"), NewToken("!=="), NewID("b"), NewToken(";"),
+			NewToken("var"), NewID("f"), NewToken("="), NewID("a"), NewToken("==="), NewID("b"), NewToken(";"),
+			NewToken("var"), NewID("g"), NewToken("="), NewID("a"), NewToken("<="), NewID("b"), NewToken(";"),
+			NewToken("var"), NewID("h"), NewToken("="), NewID("a"), NewToken(">="), NewID("b"), NewToken(";"),
+			NewToken("var"), NewID("i"), NewToken("="), NewID("a"), NewToken("&&"), NewID("b"), NewToken(";"),
+			NewToken("var"), NewID("j"), NewToken("="), NewID("a"), NewToken("||"), NewID("b"), NewToken(";"),
+			NewToken("var"), NewID("k"), NewToken("="), NewID("a"), NewToken("<<"), NewID("b"), NewToken(";"),
+			NewToken("var"), NewID("l"), NewToken("="), NewID("a"), NewToken(">>"), NewID("b"), NewToken(";"),
+			NewToken("var"), NewID("m"), NewToken("="), NewID("a"), NewToken(">>>"), NewID("b"), NewToken(";"),
+			NewToken("var"), NewID("n"), NewToken("="), NewID("a"), NewToken("**"), NewID("b"), NewToken(";"),
+			NewToken("var"), NewID("o"), NewToken("="), NewID("a"), NewToken("??"), NewID("b"), NewToken(";"),
+			NewToken("var"), NewID("p"), NewToken("="), NewID("a"), NewToken("?."), NewID("b"), NewToken(";"),
 		},
 	},
 }
