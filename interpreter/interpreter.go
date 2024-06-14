@@ -31,8 +31,6 @@ func New() *Interpreter {
 }
 
 func (i *Interpreter) Interpret(program *parser.Program) {
-	fmt.Println("Interpreter Output:")
-	fmt.Println("--------------------")
 	for _, stmt := range program.Statements {
 		i.evalStatement(stmt)
 	}
@@ -43,7 +41,6 @@ func (i *Interpreter) evalStatement(stmt parser.Statement) {
 	case *parser.VariableDeclaration:
 		val := i.evalExpression(stmt.Value)
 		i.Env[stmt.Name.Value] = val
-		fmt.Printf("%s = %v (Line: %d)\n", stmt.Name.Value, val, stmt.Token.Line)
 	case *parser.IfStatement:
 		i.evalIfStatement(stmt)
 	case *parser.WhileStatement:

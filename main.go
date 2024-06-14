@@ -6,18 +6,11 @@ import (
 	"gojo/interpreter"
 	"gojo/lexer"
 	"gojo/parser"
-	"gojo/tests"
 	"os"
 )
 
 func main() {
 	env := config.LoadConfig()
-	if env.Test {
-		tests.RunLexerTests()
-		tests.RunParserTests()
-		tests.RunInterpreterTests()
-		return
-	}
 
 	// Input through input_program.js
 	inputFile := env.InputFile

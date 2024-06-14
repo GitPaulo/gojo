@@ -9,7 +9,7 @@ type GojoToken struct {
 }
 
 func (t *GojoToken) String() string {
-	return fmt.Sprintf("Token { Type: %s, Text: %q, Line: %d }", t.Type.StringInline(), t.Text, t.Line)
+	return fmt.Sprintf("Token { Type: %-10s  Line: %2d Text: %-10q }", t.Type.Label, t.Line, t.Text)
 }
 
 type GojoTokenType struct {
@@ -93,6 +93,8 @@ var TokenOperators = map[string]*GojoTokenType{
 	"/":   {Label: "/", BeforeExpr: true, StartsExpr: true},
 	"!":   {Label: "!", BeforeExpr: true, StartsExpr: true},
 	"~":   {Label: "~", BeforeExpr: true, StartsExpr: true},
+	"++":  {Label: "++", BeforeExpr: true, StartsExpr: true},
+	"+=":  {Label: "+=", BeforeExpr: true},
 	"==":  {Label: "==", BeforeExpr: true},  // Equality
 	"!=":  {Label: "!=", BeforeExpr: true},  // Equality
 	"!==": {Label: "!==", BeforeExpr: true}, // Equality
