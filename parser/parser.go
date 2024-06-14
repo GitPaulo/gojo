@@ -123,6 +123,10 @@ func (p *Parser) parseExpressionStatement() *ExpressionStatement {
 func (p *Parser) parseVariableDeclarationStatement() *VariableDeclaration {
 	stmt := &VariableDeclaration{Token: p.curToken}
 
+	if p.curToken.Type.Label == "const" {
+		stmt.IsConstant = true
+	}
+
 	if !p.expectPeek("identifier") {
 		return nil
 	}

@@ -61,9 +61,10 @@ type Node interface {
 
 // VariableDeclaration represents a variable declaration.
 type VariableDeclaration struct {
-	Token lexer.GojoToken
-	Name  *Identifier
-	Value Expression
+	Token      lexer.GojoToken
+	Name       *Identifier
+	Value      Expression
+	IsConstant bool // Whether the variable is a "const"
 }
 
 func (vd *VariableDeclaration) statementNode()       {}

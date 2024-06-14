@@ -9,11 +9,16 @@ import (
 )
 
 type Interpreter struct {
-	Env map[string]interface{}
+	Env       map[string]interface{}
+	Constants map[string]bool
 }
 
 func New() *Interpreter {
-	interpreter := &Interpreter{Env: make(map[string]interface{})}
+	// Initialize interpreter with empty environment and constants
+	interpreter := &Interpreter{
+		Env:       make(map[string]interface{}),
+		Constants: make(map[string]bool),
+	}
 	// Add built-in functions
 	interpreter.Env["console"] = map[string]interface{}{
 		"log": func(args ...interface{}) {
@@ -63,6 +68,10 @@ func (i *Interpreter) evalStatement(stmt parser.Statement) {
 	case *parser.VariableDeclaration:
 		val := i.evalExpression(stmt.Value)
 		i.Env[stmt.Name.Value] = val
+		// Set constant, probably not very performant
+		if stmt.IsConstant {
+			i.Constants[stmt.Name.Value] = true
+		}
 	case *parser.IfStatement:
 		i.evalIfStatement(stmt)
 	case *parser.WhileStatement:
@@ -411,6 +420,11 @@ func (i *Interpreter) evalAssignmentExpression(expr *parser.AssignmentExpression
 	_, ok := i.Env[expr.Name.Value]
 	if !ok {
 		fmt.Printf("Error (Line: %d): Variable '%s' not found\n", expr.Token.Line, expr.Name.Value)
+		return nil
+	}
+
+	if i.Constants[expr.Name.Value] {
+		fmt.Printf("Error (Line: %d): Cannot reassign to constant variable '%s'\n", expr.Token.Line, expr.Name.Value)
 		return nil
 	}
 
