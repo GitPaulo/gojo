@@ -11,6 +11,21 @@ if (x > y) {
     console.log("x equal to y")
 }
 
+// Switch
+var x = 2;
+switch (x) {
+    case 1: {
+        console.log("[switch] x is 1");
+        break;
+    } case 2: {
+        console.log("[switch] x is 2");
+        break;
+    } default: {
+        console.log("[switch] x is something else");
+    }
+}
+
+
 // Boolean Operators
 console.log(true && false);
 console.log(true || false);

@@ -14,7 +14,8 @@
 - [x] `if` statements
 - [x] `else` statements
 - [x] `else if` statements
-- [ ] `switch` statements
+- [x] `switch` statements
+  - [ ] without block scope
 - [ ] `for` loops
 - [ ] `for...of` loops
 - [ ] `for...in` loops
@@ -27,14 +28,14 @@
 - [x] Comparison operators (`==`, `===`, `!=`, `!==`, `<`, `>`, `<=`, `>=`)
 - [x] Logical operators (`&&`, `||`, `!`)
 - [x] Bitwise operators (`&`, `|`, `^`, `<<`, `>>`, `>>>`)
-- [ ] Unary operators (`++`, `--`, `typeof`, `delete`)
-- [ ] Ternary operator (`?:`)
+- [x] Unary operators (`++`, `--`, `typeof`, `delete`)
+- [x] Ternary operator (`?:`)
 
 ### Objects and Arrays
 - [ ] Object creation
 - [ ] Object property access
-- [ ] Array creation
-- [ ] Array indexing
+- [x] Array creation
+- [x] Array indexing
 - [ ] Array length property
 
 ### Built-in Functions and Objects

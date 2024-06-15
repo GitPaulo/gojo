@@ -66,8 +66,8 @@ func (i *Interpreter) InterpretREPL(program *parser.Program) {
 func (i *Interpreter) evalStatement(stmt parser.Statement) {
 	switch stmt := stmt.(type) {
 	case *parser.VariableDeclaration:
-		val := i.evalExpression(stmt.Value)
-		i.Env[stmt.Name.Value] = val
+		value := i.evalExpression(stmt.Value)
+		i.Env[stmt.Name.Value] = value
 		// Set constant, probably not very performant
 		if stmt.IsConstant {
 			i.Constants[stmt.Name.Value] = true
@@ -76,6 +76,8 @@ func (i *Interpreter) evalStatement(stmt parser.Statement) {
 		i.Env[stmt.Name.Value] = stmt
 	case *parser.IfStatement:
 		i.evalIfStatement(stmt)
+	case *parser.SwitchStatement:
+		i.evalSwitchStatement(stmt)
 	case *parser.WhileStatement:
 		for i.evalExpression(stmt.Condition).(bool) {
 			i.evalBlockStatement(stmt.Body)
@@ -97,12 +99,28 @@ func (i *Interpreter) evalIfStatement(stmt *parser.IfStatement) {
 	if condition.(bool) {
 		i.evalBlockStatement(stmt.Consequence)
 	} else if stmt.Alternative != nil {
-		switch alt := stmt.Alternative.Statements[0].(type) {
+		switch alternative := stmt.Alternative.Statements[0].(type) {
 		case *parser.IfStatement:
-			i.evalIfStatement(alt)
+			i.evalIfStatement(alternative)
 		default:
 			i.evalBlockStatement(stmt.Alternative)
 		}
+	}
+}
+
+func (i *Interpreter) evalSwitchStatement(stmt *parser.SwitchStatement) {
+	exprVal := i.evalExpression(stmt.Expression)
+
+	for _, caseClause := range stmt.Cases {
+		caseValue := i.evalExpression(caseClause.Condition)
+		if exprVal == caseValue {
+			i.evalBlockStatement(caseClause.Body)
+			return
+		}
+	}
+
+	if stmt.DefaultCase != nil {
+		i.evalBlockStatement(stmt.DefaultCase.Body)
 	}
 }
 
@@ -119,19 +137,19 @@ func (i *Interpreter) evalExpression(expr parser.Expression) interface{} {
 	case *parser.BooleanLiteral:
 		return expr.Value
 	case *parser.IntegerLiteral:
-		val, err := strconv.ParseInt(expr.Token.Text, 0, 64)
+		integer, err := strconv.ParseInt(expr.Token.Text, 0, 64)
 		if err != nil {
 			fmt.Printf("Error (Line: %d): %v\n", expr.Token.Line, err)
 			return nil
 		}
-		return val
+		return integer
 	case *parser.Identifier:
-		val, ok := i.Env[expr.Value]
+		identifierValue, ok := i.Env[expr.Value]
 		if !ok {
 			fmt.Printf("Error (Line: %d): Variable '%s' not found\n", expr.Token.Line, expr.Value)
 			return nil
 		}
-		return val
+		return identifierValue
 	case *parser.AssignmentExpression:
 		return i.evalAssignmentExpression(expr)
 	case *parser.CallExpression:
@@ -142,7 +160,7 @@ func (i *Interpreter) evalExpression(expr parser.Expression) interface{} {
 			fmt.Printf("Error: Object '%s' not found\n", expr.Object.String())
 			return nil
 		}
-		if objName, ok := expr.Object.(*parser.Identifier); ok && objName.Value == "console" {
+		if objectIdentifier, ok := expr.Object.(*parser.Identifier); ok && objectIdentifier.Value == "console" {
 			// Handle 'console.log'
 			if expr.Property.Value == "log" {
 				return "console.log"
@@ -154,8 +172,8 @@ func (i *Interpreter) evalExpression(expr parser.Expression) interface{} {
 		return object
 	case *parser.ArrayLiteral:
 		var elements []interface{}
-		for _, el := range expr.Elements {
-			elements = append(elements, i.evalExpression(el))
+		for _, element := range expr.Elements {
+			elements = append(elements, i.evalExpression(element))
 		}
 		return elements
 	case *parser.ArrayAccessExpression:
@@ -166,16 +184,16 @@ func (i *Interpreter) evalExpression(expr parser.Expression) interface{} {
 			fmt.Printf("Error: Not an array (Line: %d)\n", expr.Token.Line)
 			return nil
 		}
-		idx, ok := index.(int64)
+		arrayIndex, ok := index.(int64)
 		if !ok {
 			fmt.Printf("Error: Index is not an integer (Line: %d)\n", expr.Token.Line)
 			return nil
 		}
-		if idx < 0 || idx >= int64(len(array)) {
+		if arrayIndex < 0 || arrayIndex >= int64(len(array)) {
 			fmt.Printf("Error: Index out of bounds (Line: %d)\n", expr.Token.Line)
 			return nil
 		}
-		return array[idx]
+		return array[arrayIndex]
 	case *parser.BinaryExpression:
 		leftVal := i.evalExpression(expr.Left)
 		rightVal := i.evalExpression(expr.Right)
@@ -366,27 +384,27 @@ func (i *Interpreter) evalExpression(expr parser.Expression) interface{} {
 
 func (i *Interpreter) evalCallExpression(expr *parser.CallExpression) interface{} {
 	var functionName string
-	switch fn := expr.Function.(type) {
+	switch function := expr.Function.(type) {
 	case *parser.Identifier:
-		functionName = fn.Value
+		functionName = function.Value
 	case *parser.MemberAccessExpression:
-		object := i.evalExpression(fn.Object)
+		object := i.evalExpression(function.Object)
 		if object == nil {
-			fmt.Printf("Error: Object '%s' not found\n", fn.Object.String())
+			fmt.Printf("Error: Object '%s' not found\n", function.Object.String())
 			return nil
 		}
-		if objName, ok := fn.Object.(*parser.Identifier); ok {
-			switch objName.Value {
+		if objectIdentifier, ok := function.Object.(*parser.Identifier); ok {
+			switch objectIdentifier.Value {
 			case "console":
-				functionName = "console." + fn.Property.Value
+				functionName = "console." + function.Property.Value
 			case "Math":
-				functionName = "Math." + fn.Property.Value
+				functionName = "Math." + function.Property.Value
 			default:
-				fmt.Printf("Error: Unsupported object '%s'\n", fn.Object.String())
+				fmt.Printf("Error: Unsupported object '%s'\n", function.Object.String())
 				return nil
 			}
 		} else {
-			fmt.Printf("Error: Unsupported object '%s'\n", fn.Object.String())
+			fmt.Printf("Error: Unsupported object '%s'\n", function.Object.String())
 			return nil
 		}
 	default:
@@ -408,8 +426,8 @@ func (i *Interpreter) evalCallExpression(expr *parser.CallExpression) interface{
 			fmt.Printf("Error: Math.sqrt expects 1 argument, got %d\n", len(expr.Arguments))
 			return nil
 		}
-		arg := i.evalExpression(expr.Arguments[0])
-		if num, ok := arg.(int64); ok {
+		sqrtNumber := i.evalExpression(expr.Arguments[0])
+		if num, ok := sqrtNumber.(int64); ok {
 			return math.Sqrt(float64(num))
 		} else {
 			fmt.Printf("Error: Math.sqrt expects a numeric argument\n")
@@ -434,8 +452,8 @@ func (i *Interpreter) evalCallExpression(expr *parser.CallExpression) interface{
 			fmt.Printf("Error: typeof expects 1 argument, got %d\n", len(expr.Arguments))
 			return nil
 		}
-		arg := i.evalExpression(expr.Arguments[0])
-		return fmt.Sprintf("%T", arg)
+		typeArgument := i.evalExpression(expr.Arguments[0])
+		return fmt.Sprintf("%T", typeArgument)
 	default:
 		// Check if it's a user-defined function
 		if function, ok := i.Env[functionName]; ok {
@@ -477,17 +495,17 @@ func (i *Interpreter) evalAssignmentExpression(expr *parser.AssignmentExpression
 		return nil
 	}
 
-	val := i.evalExpression(expr.Value)
-	i.Env[expr.Name.Value] = val
+	evaluated := i.evalExpression(expr.Value)
+	i.Env[expr.Name.Value] = evaluated
 
-	fmt.Printf("%s = %v (Line: %d)\n", expr.Name.Value, val, expr.Token.Line)
-	return val
+	fmt.Printf("%s = %v (Line: %d)\n", expr.Name.Value, evaluated, expr.Token.Line)
+	return evaluated
 }
 
-func (i *Interpreter) evalExpressions(exprs []parser.Expression) []interface{} {
+func (i *Interpreter) evalExpressions(expressions []parser.Expression) []interface{} {
 	var result []interface{}
-	for _, expr := range exprs {
-		result = append(result, i.evalExpression(expr))
+	for _, expression := range expressions {
+		result = append(result, i.evalExpression(expression))
 	}
 	return result
 }

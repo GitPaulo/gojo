@@ -109,8 +109,12 @@ func (p *Parser) parseStatement() Statement {
 		return p.parseFunctionDeclaration()
 	case "if":
 		return p.parseIfStatement()
+	case "switch":
+		return p.parseSwitchStatement()
 	case "while":
 		return p.parseWhileStatement()
+	case "break":
+		return p.parseBreakStatement()
 	default:
 		return p.parseExpressionStatement()
 	}
@@ -298,6 +302,85 @@ func (p *Parser) parseWhileStatement() *WhileStatement {
 	}
 
 	stmt.Body = p.parseBlockStatement()
+
+	return stmt
+}
+
+func (p *Parser) parseSwitchStatement() *SwitchStatement {
+	stmt := &SwitchStatement{Token: p.curToken}
+
+	if !p.expectPeek("(") {
+		return nil
+	}
+
+	p.nextToken()
+	stmt.Expression = p.parseExpression(LOWEST)
+
+	if !p.expectPeek(")") {
+		return nil
+	}
+
+	if !p.expectPeek("{") {
+		return nil
+	}
+
+	p.nextToken() // Consume '{'
+
+	stmt.Cases = []*CaseClause{}
+	for !p.curTokenIs("}") && p.curToken.Type.Label != "eof" {
+		if p.curTokenIs("case") {
+			caseClause := p.parseCaseClause()
+			if caseClause != nil {
+				stmt.Cases = append(stmt.Cases, caseClause)
+			}
+		} else if p.curTokenIs("default") {
+			stmt.DefaultCase = p.parseDefaultCaseClause()
+		}
+		p.nextToken()
+	}
+
+	return stmt
+}
+
+func (p *Parser) parseCaseClause() *CaseClause {
+	caseClause := &CaseClause{Token: p.curToken}
+
+	p.nextToken() // Move to the expression
+
+	caseClause.Condition = p.parseExpression(LOWEST)
+
+	if !p.expectPeek(":") {
+		return nil
+	}
+
+	p.nextToken() // Consume ':'
+
+	caseClause.Body = p.parseBlockStatement()
+
+	return caseClause
+}
+
+func (p *Parser) parseDefaultCaseClause() *CaseClause {
+	caseClause := &CaseClause{Token: p.curToken}
+	caseClause.Condition = &BooleanLiteral{Token: p.curToken, Value: true} // Default case
+
+	if !p.expectPeek(":") {
+		return nil
+	}
+
+	p.nextToken() // Consume ':'
+
+	caseClause.Body = p.parseBlockStatement()
+
+	return caseClause
+}
+
+func (p *Parser) parseBreakStatement() *BreakStatement {
+	stmt := &BreakStatement{Token: p.curToken}
+
+	if p.peekTokenIs(";") {
+		p.nextToken()
+	}
 
 	return stmt
 }

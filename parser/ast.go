@@ -311,3 +311,79 @@ func (pe *PrefixExpression) TokenLiteral() string { return pe.Token.Text }
 func (pe *PrefixExpression) String() string {
 	return fmt.Sprintf("(%s%s)", pe.Operator, pe.Right.String())
 }
+
+// SwitchStatement represents a switch statement.
+type SwitchStatement struct {
+	Token       lexer.GojoToken
+	Expression  Expression
+	Cases       []*CaseClause
+	DefaultCase *CaseClause
+}
+
+func (ss *SwitchStatement) statementNode()       {}
+func (ss *SwitchStatement) TokenLiteral() string { return ss.Token.Text }
+func (ss *SwitchStatement) String() string {
+	var out strings.Builder
+	out.WriteString("Switch (")
+	out.WriteString(ss.Expression.String())
+	out.WriteString(": ")
+	for _, cc := range ss.Cases {
+		out.WriteString(cc.String())
+	}
+	if ss.DefaultCase != nil {
+		out.WriteString("Default: ")
+		out.WriteString(ss.DefaultCase.String())
+	}
+	out.WriteString(")")
+	return out.String()
+}
+
+// CaseClause represents a case clause in a switch statement.
+type CaseClause struct {
+	Token     lexer.GojoToken
+	Condition Expression
+	Body      *BlockStatement
+}
+
+func (cc *CaseClause) statementNode()       {}
+func (cc *CaseClause) TokenLiteral() string { return cc.Token.Text }
+func (cc *CaseClause) String() string {
+	var out strings.Builder
+	if cc.Condition != nil {
+		out.WriteString("CaseClause(")
+		out.WriteString(cc.Condition.String())
+	} else {
+		out.WriteString("DefaultCaseClause(")
+	}
+	out.WriteString("Body(")
+	if cc.Body != nil {
+		for _, stmt := range cc.Body.Statements {
+			out.WriteString(stmt.String())
+		}
+	}
+	out.WriteString(")) ")
+	return out.String()
+}
+
+// BreakStatement represents a switch break statement.
+type BreakStatement struct {
+	Token lexer.GojoToken
+}
+
+func (bs *BreakStatement) statementNode()       {}
+func (bs *BreakStatement) TokenLiteral() string { return bs.Token.Text }
+func (bs *BreakStatement) String() string {
+	return "BreakStatement()"
+}
+
+// ReturnStatement represents a function/body return statement.
+type ReturnStatement struct {
+	Token lexer.GojoToken
+	Value Expression
+}
+
+func (rs *ReturnStatement) statementNode()       {}
+func (rs *ReturnStatement) TokenLiteral() string { return rs.Token.Text }
+func (rs *ReturnStatement) String() string {
+	return fmt.Sprintf("ReturnStatement(%s)", rs.Value.String())
+}
