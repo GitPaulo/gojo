@@ -87,13 +87,17 @@ func (l *Lexer) NextToken() GojoToken {
 	case 0:
 		token = GojoToken{Type: TokenText["eof"], Text: ""}
 	default:
+		// Note: letters can be a lot! (e.g., keywords, literals and identifiers)
 		if isLetter(l.curChar) {
-			identifier := l.readIdentifier()
-			tokenType, ok := TokenKeywords[identifier]
+			word := l.readWord()
+			tokenType, ok := TokenKeywords[word]
 			if !ok {
-				tokenType = TokenText["identifier"]
+				tokenType, ok = TokenLiterals[word]
+				if !ok {
+					tokenType = TokenText["identifier"]
+				}
 			}
-			return l.NewToken(tokenType, identifier)
+			return l.NewToken(tokenType, word)
 		} else if isDigit(l.curChar) {
 			number := l.readNumber()
 			return l.NewToken(TokenLiterals["number"], number)
@@ -286,7 +290,7 @@ func (l *Lexer) readNumber() string {
 	return l.input[startPos:l.position]
 }
 
-func (l *Lexer) readIdentifier() string {
+func (l *Lexer) readWord() string {
 	pos := l.position
 	for isLetter(l.curChar) || isDigit(l.curChar) {
 		l.readChar()

@@ -279,6 +279,29 @@ func (p *Parser) parseBlockStatement() *BlockStatement {
 	return block
 }
 
+func (p *Parser) parseWhileStatement() *WhileStatement {
+	stmt := &WhileStatement{Token: p.curToken}
+
+	if !p.expectPeek("(") {
+		return nil
+	}
+
+	p.nextToken()
+	stmt.Condition = p.parseExpression(LOWEST)
+
+	if !p.expectPeek(")") {
+		return nil
+	}
+
+	if !p.expectPeek("{") {
+		return nil
+	}
+
+	stmt.Body = p.parseBlockStatement()
+
+	return stmt
+}
+
 func (p *Parser) parseExpression(precedence int) Expression {
 	left := p.parseAtomicExpression()
 	if left == nil {
@@ -352,7 +375,7 @@ func (p *Parser) parseAtomicExpression() Expression {
 		return p.parseStringLiteral()
 	case "number":
 		return p.parseIntegerLiteral()
-	case "true", "false":
+	case "boolean":
 		return p.parseBooleanLiteral()
 	case "null":
 		return p.parseNullLiteral()
@@ -388,39 +411,6 @@ func (p *Parser) parseAssignmentExpression(left Expression) Expression {
 	return exp
 }
 
-func (p *Parser) parseIntegerLiteral() *IntegerLiteral {
-	literal := &IntegerLiteral{Token: p.curToken}
-	literal.Value, _ = strconv.ParseInt(p.curToken.Text, 0, 64)
-	return literal
-}
-
-func (p *Parser) parseIdentifier() *Identifier {
-	return &Identifier{Token: p.curToken, Value: p.curToken.Text}
-}
-
-func (p *Parser) parseBooleanLiteral() *BooleanLiteral {
-	value := p.curToken.Type.Label == "true"
-	return &BooleanLiteral{Token: p.curToken, Value: value}
-}
-
-func (p *Parser) parseNullLiteral() *NullLiteral {
-	return &NullLiteral{Token: p.curToken}
-}
-
-func (p *Parser) parseUndefinedLiteral() *UndefinedLiteral {
-	return &UndefinedLiteral{Token: p.curToken}
-}
-
-func (p *Parser) parseStringLiteral() *StringLiteral {
-	return &StringLiteral{Token: p.curToken, Value: p.curToken.Text}
-}
-
-func (p *Parser) parseArrayLiteral() *ArrayLiteral {
-	array := &ArrayLiteral{Token: p.curToken}
-	array.Elements = p.parseExpressionList("]")
-	return array
-}
-
 func (p *Parser) parseArrayAccessExpression(left Expression) *ArrayAccessExpression {
 	expr := &ArrayAccessExpression{Token: p.curToken, Left: left}
 	p.nextToken()
@@ -438,29 +428,6 @@ func (p *Parser) parseGroupedExpression() Expression {
 		return nil
 	}
 	return expr
-}
-
-func (p *Parser) parseWhileStatement() *WhileStatement {
-	stmt := &WhileStatement{Token: p.curToken}
-
-	if !p.expectPeek("(") {
-		return nil
-	}
-
-	p.nextToken()
-	stmt.Condition = p.parseExpression(LOWEST)
-
-	if !p.expectPeek(")") {
-		return nil
-	}
-
-	if !p.expectPeek("{") {
-		return nil
-	}
-
-	stmt.Body = p.parseBlockStatement()
-
-	return stmt
 }
 
 func (p *Parser) parseCallExpression(function Expression) Expression {
@@ -494,6 +461,44 @@ func (p *Parser) parseExpressionList(end string) []Expression {
 	p.nextToken() // consume the end token
 
 	return list
+}
+
+/**
+ * Parsing Literals
+ */
+
+func (p *Parser) parseIdentifier() *Identifier {
+	return &Identifier{Token: p.curToken, Value: p.curToken.Text}
+}
+
+func (p *Parser) parseIntegerLiteral() *IntegerLiteral {
+	literal := &IntegerLiteral{Token: p.curToken}
+	literal.Value, _ = strconv.ParseInt(p.curToken.Text, 0, 64)
+	return literal
+}
+
+func (p *Parser) parseBooleanLiteral() *BooleanLiteral {
+	literal := &BooleanLiteral{Token: p.curToken}
+	literal.Value, _ = strconv.ParseBool(p.curToken.Text)
+	return literal
+}
+
+func (p *Parser) parseNullLiteral() *NullLiteral {
+	return &NullLiteral{Token: p.curToken}
+}
+
+func (p *Parser) parseUndefinedLiteral() *UndefinedLiteral {
+	return &UndefinedLiteral{Token: p.curToken}
+}
+
+func (p *Parser) parseStringLiteral() *StringLiteral {
+	return &StringLiteral{Token: p.curToken, Value: p.curToken.Text}
+}
+
+func (p *Parser) parseArrayLiteral() *ArrayLiteral {
+	array := &ArrayLiteral{Token: p.curToken}
+	array.Elements = p.parseExpressionList("]")
+	return array
 }
 
 /**

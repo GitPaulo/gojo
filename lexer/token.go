@@ -64,9 +64,6 @@ var TokenKeywords = map[string]*GojoTokenType{
 	"extends":    {Label: "extends", BeforeExpr: true},
 	"export":     {Label: "export", BeforeExpr: true},
 	"import":     {Label: "import", StartsExpr: true},
-	"null":       {Label: "null", StartsExpr: true},
-	"true":       {Label: "true", StartsExpr: true},
-	"false":      {Label: "false", StartsExpr: true},
 	"in":         {Label: "in", BeforeExpr: true},
 	"instanceof": {Label: "instanceof", BeforeExpr: true},
 	"typeof":     {Label: "typeof", BeforeExpr: true, StartsExpr: true},
@@ -135,15 +132,18 @@ var TokenOperators = map[string]*GojoTokenType{
 }
 
 var TokenText = map[string]*GojoTokenType{
-	"identifier": {Label: "identifier", StartsExpr: true},
+	"identifier": {Label: "identifier", StartsExpr: true}, // Needs lexer function
 	"sof":        {Label: "sof"},
 	"eof":        {Label: "eof"},
 }
 
 var TokenLiterals = map[string]*GojoTokenType{
-	"number":   {Label: "number", StartsExpr: true},
-	"string":   {Label: "string", StartsExpr: true},
-	"regexp":   {Label: "regexp", StartsExpr: true},
-	"template": {Label: "template", StartsExpr: true},
-	"boolean":  {Label: "boolean", StartsExpr: true},
+	"number":    {Label: "number", StartsExpr: true},   // Needs lexer function
+	"string":    {Label: "string", StartsExpr: true},   // Needs lexer function
+	"template":  {Label: "template", StartsExpr: true}, // Needs lexer function
+	"regexp":    {Label: "regexp", StartsExpr: true},   // Needs lexer function
+	"true":      {Label: "boolean", StartsExpr: true},
+	"false":     {Label: "boolean", StartsExpr: true},
+	"undefined": {Label: "undefined", StartsExpr: true},
+	"null":      {Label: "null", StartsExpr: true},
 }
