@@ -22,6 +22,10 @@ while (i < 5) {
     i = i + 1;
 }
 
+// Array
+var arr = [1, 2, 3, 4, 5];
+console.log(arr[2]);
+
 // Built in Functions
 console.log("Hello World!");
 console.log(Math.sqrt(16));

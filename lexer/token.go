@@ -9,6 +9,11 @@ type GojoToken struct {
 }
 
 func (t GojoToken) String() string {
+	return fmt.Sprintf("Token { Type: %s Line: %d Text: %q }", t.Type.Label, t.Line, t.Text)
+}
+
+// TestString formats the GojoToken for testing purposes.
+func (t GojoToken) TestString() string {
 	return fmt.Sprintf("Token { Type: %-10s  Line: %2d Text: %-10q }", t.Type.Label, t.Line, t.Text)
 }
 
@@ -26,7 +31,7 @@ func (t GojoTokenType) String() string {
 
 // StringInline formats the GojoTokenType inline for better readability in nested structures.
 func (t GojoTokenType) StringInline() string {
-	return fmt.Sprintf("Label: %s, test2BeforeExpr: %t, StartsExpr: %t, IsLoop: %t",
+	return fmt.Sprintf("Label: %s, BeforeExpr: %t, StartsExpr: %t, IsLoop: %t",
 		t.Label, t.BeforeExpr, t.StartsExpr, t.IsLoop)
 }
 
@@ -48,7 +53,7 @@ var TokenKeywords = map[string]*GojoTokenType{
 	"throw":      {Label: "throw", BeforeExpr: true},
 	"try":        {Label: "try", BeforeExpr: true},
 	"var":        {Label: "var", BeforeExpr: true},
-	"let":        {Label: "var", BeforeExpr: true},
+	"let":        {Label: "let", BeforeExpr: true},
 	"const":      {Label: "const", BeforeExpr: true},
 	"while":      {Label: "while", IsLoop: true},
 	"with":       {Label: "with", BeforeExpr: true},
@@ -67,6 +72,8 @@ var TokenKeywords = map[string]*GojoTokenType{
 	"typeof":     {Label: "typeof", BeforeExpr: true, StartsExpr: true},
 	"void":       {Label: "void", BeforeExpr: true, StartsExpr: true},
 	"delete":     {Label: "delete", BeforeExpr: true, StartsExpr: true},
+	"yield":      {Label: "yield", BeforeExpr: true, StartsExpr: true},
+	"await":      {Label: "await", BeforeExpr: true, StartsExpr: true},
 }
 
 var TokenPunctuation = map[string]*GojoTokenType{
@@ -85,40 +92,51 @@ var TokenPunctuation = map[string]*GojoTokenType{
 }
 
 var TokenOperators = map[string]*GojoTokenType{
-	"=":   {Label: "=", BeforeExpr: true},
-	"+":   {Label: "+", BeforeExpr: true, StartsExpr: true}, // Can be unary or binary
-	"-":   {Label: "-", BeforeExpr: true, StartsExpr: true}, // Can be unary or binary
-	"*":   {Label: "*", BeforeExpr: true, StartsExpr: true},
-	"/":   {Label: "/", BeforeExpr: true, StartsExpr: true},
-	"!":   {Label: "!", BeforeExpr: true, StartsExpr: true},
-	"~":   {Label: "~", BeforeExpr: true, StartsExpr: true},
-	"++":  {Label: "++", BeforeExpr: true, StartsExpr: true},
-	"+=":  {Label: "+=", BeforeExpr: true},
-	"==":  {Label: "==", BeforeExpr: true},  // Equality
-	"!=":  {Label: "!=", BeforeExpr: true},  // Equality
-	"!==": {Label: "!==", BeforeExpr: true}, // Equality
-	"===": {Label: "===", BeforeExpr: true}, // Equality
-	"<":   {Label: "<", BeforeExpr: true},   // Relational
-	">":   {Label: ">", BeforeExpr: true},   // Relational
-	"<=":  {Label: "<=", BeforeExpr: true},  // Relational
-	">=":  {Label: ">=", BeforeExpr: true},  // Relational
-	"&&":  {Label: "&&", BeforeExpr: true},  // Logical AND
-	"||":  {Label: "||", BeforeExpr: true},  // Logical OR
-	"|":   {Label: "|", BeforeExpr: true},   // Bitwise OR
-	"^":   {Label: "^", BeforeExpr: true},   // Bitwise XOR
-	"&":   {Label: "&", BeforeExpr: true},   // Bitwise AND
-	"<<":  {Label: "<<", BeforeExpr: true},  // Bit Shift
-	">>":  {Label: ">>", BeforeExpr: true},  // Bit Shift
-	">>>": {Label: ">>>", BeforeExpr: true}, // Bit Shift
-	"%":   {Label: "%", BeforeExpr: true},   // Modulo
-	"**":  {Label: "**", BeforeExpr: true},
-	"??":  {Label: "??", BeforeExpr: true}, // Coalesce
-	"?":   {Label: "?", BeforeExpr: true, StartsExpr: true},
-	"?.":  {Label: "?.", BeforeExpr: true},
+	"=":    {Label: "=", BeforeExpr: true},
+	"+":    {Label: "+", BeforeExpr: true, StartsExpr: true}, // Can be unary or binary
+	"-":    {Label: "-", BeforeExpr: true, StartsExpr: true}, // Can be unary or binary
+	"*":    {Label: "*", BeforeExpr: true, StartsExpr: true},
+	"/":    {Label: "/", BeforeExpr: true, StartsExpr: true},
+	"!":    {Label: "!", BeforeExpr: true, StartsExpr: true},
+	"~":    {Label: "~", BeforeExpr: true, StartsExpr: true},
+	"++":   {Label: "++", BeforeExpr: true, StartsExpr: true},
+	"--":   {Label: "--", BeforeExpr: true, StartsExpr: true},
+	"+=":   {Label: "+=", BeforeExpr: true},
+	"-=":   {Label: "-=", BeforeExpr: true},
+	"*=":   {Label: "*=", BeforeExpr: true},
+	"/=":   {Label: "/=", BeforeExpr: true},
+	"%=":   {Label: "%=", BeforeExpr: true},
+	"&=":   {Label: "&=", BeforeExpr: true},
+	"|=":   {Label: "|=", BeforeExpr: true},
+	"^=":   {Label: "^=", BeforeExpr: true},
+	"<<=":  {Label: "<<=", BeforeExpr: true},
+	">>=":  {Label: ">>=", BeforeExpr: true},
+	">>>=": {Label: ">>>=", BeforeExpr: true},
+	"==":   {Label: "==", BeforeExpr: true},  // Equality
+	"!=":   {Label: "!=", BeforeExpr: true},  // Equality
+	"!==":  {Label: "!==", BeforeExpr: true}, // Equality
+	"===":  {Label: "===", BeforeExpr: true}, // Equality
+	"<":    {Label: "<", BeforeExpr: true},   // Relational
+	">":    {Label: ">", BeforeExpr: true},   // Relational
+	"<=":   {Label: "<=", BeforeExpr: true},  // Relational
+	">=":   {Label: ">=", BeforeExpr: true},  // Relational
+	"&&":   {Label: "&&", BeforeExpr: true},  // Logical AND
+	"||":   {Label: "||", BeforeExpr: true},  // Logical OR
+	"&":    {Label: "&", BeforeExpr: true},   // Bitwise AND
+	"|":    {Label: "|", BeforeExpr: true},   // Bitwise OR
+	"^":    {Label: "^", BeforeExpr: true},   // Bitwise XOR
+	"<<":   {Label: "<<", BeforeExpr: true},  // Bit Shift
+	">>":   {Label: ">>", BeforeExpr: true},  // Bit Shift
+	">>>":  {Label: ">>>", BeforeExpr: true}, // Bit Shift
+	"%":    {Label: "%", BeforeExpr: true},   // Modulo
+	"**":   {Label: "**", BeforeExpr: true},  // Exponentiation
+	"??":   {Label: "??", BeforeExpr: true},  // Coalesce
+	"?.":   {Label: "?.", BeforeExpr: true},  // Optional chaining
 }
 
 var TokenText = map[string]*GojoTokenType{
 	"identifier": {Label: "identifier", StartsExpr: true},
+	"sof":        {Label: "sof"},
 	"eof":        {Label: "eof"},
 }
 
@@ -127,4 +145,5 @@ var TokenLiterals = map[string]*GojoTokenType{
 	"string":   {Label: "string", StartsExpr: true},
 	"regexp":   {Label: "regexp", StartsExpr: true},
 	"template": {Label: "template", StartsExpr: true},
+	"boolean":  {Label: "boolean", StartsExpr: true},
 }

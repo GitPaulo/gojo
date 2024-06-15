@@ -152,6 +152,30 @@ func (i *Interpreter) evalExpression(expr parser.Expression) interface{} {
 			}
 		}
 		return object
+	case *parser.ArrayLiteral:
+		var elements []interface{}
+		for _, el := range expr.Elements {
+			elements = append(elements, i.evalExpression(el))
+		}
+		return elements
+	case *parser.ArrayAccessExpression:
+		left := i.evalExpression(expr.Left)
+		index := i.evalExpression(expr.Index)
+		array, ok := left.([]interface{})
+		if !ok {
+			fmt.Printf("Error: Not an array (Line: %d)\n", expr.Token.Line)
+			return nil
+		}
+		idx, ok := index.(int64)
+		if !ok {
+			fmt.Printf("Error: Index is not an integer (Line: %d)\n", expr.Token.Line)
+			return nil
+		}
+		if idx < 0 || idx >= int64(len(array)) {
+			fmt.Printf("Error: Index out of bounds (Line: %d)\n", expr.Token.Line)
+			return nil
+		}
+		return array[idx]
 	case *parser.BinaryExpression:
 		leftVal := i.evalExpression(expr.Left)
 		rightVal := i.evalExpression(expr.Right)

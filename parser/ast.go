@@ -7,9 +7,29 @@ import (
 )
 
 /**
- * Root Representations
+ * Interfaces
  */
 
+type Node interface {
+	TokenLiteral() string
+	String() string
+}
+
+type Statement interface {
+	Node
+	statementNode() // Placeholder method to distinguish statements from expressions
+}
+
+type Expression interface {
+	Node
+	expressionNode() // Placeholder method to distinguish expressions from statements
+}
+
+/**
+ * AST Nodes
+ */
+
+// Program represents the root of the AST.
 type Program struct {
 	Statements []Statement
 	Start      int
@@ -31,33 +51,6 @@ func (p *Program) String() string {
 	}
 	return "Program(" + out.String() + ")"
 }
-
-type Statement interface {
-	Node
-	statementNode()
-	String() string
-}
-
-type Expression interface {
-	Node
-	expressionNode()
-	String() string
-}
-
-type Declaration interface {
-	Node
-	declarationNode()
-	String() string
-}
-
-type Node interface {
-	TokenLiteral() string
-	String() string
-}
-
-/**
- * AST Nodes
- */
 
 // VariableDeclaration represents a variable declaration.
 type VariableDeclaration struct {
@@ -156,6 +149,35 @@ func (ul *UndefinedLiteral) String() string {
 	return "UndefinedLiteral(undefined)"
 }
 
+// ArrayLiteral represents an array.
+type ArrayLiteral struct {
+	Token    lexer.GojoToken
+	Elements []Expression
+}
+
+func (al *ArrayLiteral) expressionNode()      {}
+func (al *ArrayLiteral) TokenLiteral() string { return al.Token.Text }
+func (al *ArrayLiteral) String() string {
+	var elements []string
+	for _, el := range al.Elements {
+		elements = append(elements, el.String())
+	}
+	return fmt.Sprintf("ArrayLiteral(%s)", strings.Join(elements, ", "))
+}
+
+// ArrayAccessExpression represents an array access expression (e.g., arr[0]).
+type ArrayAccessExpression struct {
+	Token lexer.GojoToken
+	Left  Expression // The array being accessed
+	Index Expression // The index being accessed
+}
+
+func (aae *ArrayAccessExpression) expressionNode()      {}
+func (aae *ArrayAccessExpression) TokenLiteral() string { return aae.Token.Text }
+func (aae *ArrayAccessExpression) String() string {
+	return fmt.Sprintf("ArrayAccessExpression(%s[%s])", aae.Left.String(), aae.Index.String())
+}
+
 // BinaryExpression represents a binary operation.
 type BinaryExpression struct {
 	Token    lexer.GojoToken
@@ -177,11 +199,8 @@ type MemberAccessExpression struct {
 	Property *Identifier     // The property being accessed
 }
 
-func (mae *MemberAccessExpression) expressionNode() {}
-func (mae *MemberAccessExpression) TokenLiteral() string {
-	return mae.Token.Text
-}
-
+func (mae *MemberAccessExpression) expressionNode()      {}
+func (mae *MemberAccessExpression) TokenLiteral() string { return mae.Token.Text }
 func (mae *MemberAccessExpression) String() string {
 	return fmt.Sprintf("MemberAccessExpression(%s.%s)", mae.Object.String(), mae.Property.String())
 }
@@ -262,10 +281,8 @@ type WhileStatement struct {
 	Body      *BlockStatement
 }
 
-func (ws *WhileStatement) expressionNode()      {}
 func (ws *WhileStatement) statementNode()       {}
 func (ws *WhileStatement) TokenLiteral() string { return ws.Token.Text }
-
 func (ws *WhileStatement) String() string {
 	return fmt.Sprintf("WhileStatement(%s, %s)", ws.Condition.String(), ws.Body.String())
 }

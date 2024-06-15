@@ -39,12 +39,19 @@ type Parser struct {
 }
 
 func New(l *lexer.Lexer) *Parser {
+	sofToken := lexer.GojoToken{Type: lexer.TokenText["sof"], Text: "sof", Line: 0}
 	p := &Parser{
 		l:      l,
 		errors: []string{},
+		// Placeholders Tokens
+		curToken:  sofToken,
+		peekToken: sofToken,
 	}
+
+	// Read current and peek Tokens
 	p.nextToken()
 	p.nextToken()
+
 	return p
 }
 
@@ -182,14 +189,14 @@ func (p *Parser) parseFunctionParameters() []*Identifier {
 
 	p.nextToken()
 
-	ident := &Identifier{Token: p.curToken, Value: p.curToken.Text}
-	identifiers = append(identifiers, ident)
+	identifier := &Identifier{Token: p.curToken, Value: p.curToken.Text}
+	identifiers = append(identifiers, identifier)
 
 	for p.peekTokenIs(",") {
 		p.nextToken()
 		p.nextToken()
-		ident := &Identifier{Token: p.curToken, Value: p.curToken.Text}
-		identifiers = append(identifiers, ident)
+		identifier := &Identifier{Token: p.curToken, Value: p.curToken.Text}
+		identifiers = append(identifiers, identifier)
 	}
 
 	if !p.expectPeek(")") {
@@ -273,14 +280,14 @@ func (p *Parser) parseBlockStatement() *BlockStatement {
 }
 
 func (p *Parser) parseExpression(precedence int) Expression {
-	leftExp := p.parseAtomicExpression()
-	if leftExp == nil {
+	left := p.parseAtomicExpression()
+	if left == nil {
 		return nil
 	}
 
 	if config.LoadConfig().Verbose {
 		fmt.Println("╔══ parseExpression()")
-		fmt.Println("Left Expression:", leftExp)
+		fmt.Println("Left Expression:", left)
 		fmt.Println("Precedence:", precedence)
 		fmt.Println("Peek precedence:", p.peekPrecedence())
 		fmt.Println("╚══ [entering loop = " + strconv.FormatBool(!p.peekTokenIs(";") && precedence < p.
@@ -291,51 +298,210 @@ func (p *Parser) parseExpression(precedence int) Expression {
 		switch p.peekToken.Type.Label {
 		case "(":
 			p.nextToken()
-			leftExp = p.parseCallExpression(leftExp)
+			left = p.parseCallExpression(left)
 		case ".":
 			p.nextToken()
-			leftExp = p.parseMemberAccessExpression(leftExp)
+			left = p.parseMemberAccessExpression(left)
 		case "=":
 			p.nextToken()
-			leftExp = p.parseAssignmentExpression(leftExp)
+			left = p.parseAssignmentExpression(left)
+		case "[":
+			p.nextToken()
+			return p.parseArrayAccessExpression(left)
 		default:
 			if infixPrecedence := p.peekPrecedence(); precedence < infixPrecedence {
 				p.nextToken()
-				leftExp = p.parseInfixExpression(leftExp)
+				left = p.parseInfixExpression(left)
 			} else {
-				return leftExp
+				return left
 			}
 		}
 	}
 
-	return leftExp
+	return left
 }
 
 func (p *Parser) parseMemberAccessExpression(object Expression) Expression {
-	exp := &MemberAccessExpression{Token: p.curToken, Object: object}
+	expr := &MemberAccessExpression{Token: p.curToken, Object: object}
 
 	if !p.expectPeek("identifier") {
 		return nil
 	}
 
-	exp.Property = &Identifier{Token: p.curToken, Value: p.curToken.Text}
-	return exp
+	expr.Property = &Identifier{Token: p.curToken, Value: p.curToken.Text}
+	return expr
 }
 
 func (p *Parser) parseInfixExpression(left Expression) Expression {
-	exp := &BinaryExpression{
+	expr := &BinaryExpression{
 		Token:    p.curToken,
 		Left:     left,
 		Operator: p.curToken.Text,
 	}
 	precedence := p.curPrecedence()
 	p.nextToken()
-	exp.Right = p.parseExpression(precedence)
+	expr.Right = p.parseExpression(precedence)
+	return expr
+}
+
+func (p *Parser) parseAtomicExpression() Expression {
+	switch p.curToken.Type.Label {
+	case "identifier":
+		return p.parseIdentifier()
+	case "string":
+		return p.parseStringLiteral()
+	case "number":
+		return p.parseIntegerLiteral()
+	case "true", "false":
+		return p.parseBooleanLiteral()
+	case "null":
+		return p.parseNullLiteral()
+	case "undefined":
+		return p.parseUndefinedLiteral()
+	case "[":
+		return p.parseArrayLiteral()
+	case "(":
+		return p.parseGroupedExpression()
+	case "!":
+		return p.parsePrefixExpression()
+	default:
+		return nil
+	}
+}
+
+func (p *Parser) parsePrefixExpression() Expression {
+	expression := &PrefixExpression{
+		Token:    p.curToken,
+		Operator: p.curToken.Text,
+	}
+	p.nextToken()
+	expression.Right = p.parseExpression(PREFIX)
+	return expression
+}
+
+func (p *Parser) parseAssignmentExpression(left Expression) Expression {
+	exp := &AssignmentExpression{Token: p.curToken, Name: left.(*Identifier)}
+
+	p.nextToken() // Move past '='
+	exp.Value = p.parseExpression(LOWEST)
+
 	return exp
 }
 
-func getPrecedence(tok lexer.GojoToken) int {
-	switch tok.Type.Label {
+func (p *Parser) parseIntegerLiteral() *IntegerLiteral {
+	literal := &IntegerLiteral{Token: p.curToken}
+	literal.Value, _ = strconv.ParseInt(p.curToken.Text, 0, 64)
+	return literal
+}
+
+func (p *Parser) parseIdentifier() *Identifier {
+	return &Identifier{Token: p.curToken, Value: p.curToken.Text}
+}
+
+func (p *Parser) parseBooleanLiteral() *BooleanLiteral {
+	value := p.curToken.Type.Label == "true"
+	return &BooleanLiteral{Token: p.curToken, Value: value}
+}
+
+func (p *Parser) parseNullLiteral() *NullLiteral {
+	return &NullLiteral{Token: p.curToken}
+}
+
+func (p *Parser) parseUndefinedLiteral() *UndefinedLiteral {
+	return &UndefinedLiteral{Token: p.curToken}
+}
+
+func (p *Parser) parseStringLiteral() *StringLiteral {
+	return &StringLiteral{Token: p.curToken, Value: p.curToken.Text}
+}
+
+func (p *Parser) parseArrayLiteral() *ArrayLiteral {
+	array := &ArrayLiteral{Token: p.curToken}
+	array.Elements = p.parseExpressionList("]")
+	return array
+}
+
+func (p *Parser) parseArrayAccessExpression(left Expression) *ArrayAccessExpression {
+	expr := &ArrayAccessExpression{Token: p.curToken, Left: left}
+	p.nextToken()
+	expr.Index = p.parseExpression(LOWEST)
+	if !p.expectPeek("]") {
+		return nil
+	}
+	return expr
+}
+
+func (p *Parser) parseGroupedExpression() Expression {
+	p.nextToken() // Consume "("
+	expr := p.parseExpression(LOWEST)
+	if !p.expectPeek(")") {
+		return nil
+	}
+	return expr
+}
+
+func (p *Parser) parseWhileStatement() *WhileStatement {
+	stmt := &WhileStatement{Token: p.curToken}
+
+	if !p.expectPeek("(") {
+		return nil
+	}
+
+	p.nextToken()
+	stmt.Condition = p.parseExpression(LOWEST)
+
+	if !p.expectPeek(")") {
+		return nil
+	}
+
+	if !p.expectPeek("{") {
+		return nil
+	}
+
+	stmt.Body = p.parseBlockStatement()
+
+	return stmt
+}
+
+func (p *Parser) parseCallExpression(function Expression) Expression {
+	expr := &CallExpression{Token: p.curToken, Function: function}
+	expr.Arguments = p.parseExpressionList(")")
+	return expr
+}
+
+func (p *Parser) parseExpressionList(end string) []Expression {
+	var list []Expression
+
+	if p.peekTokenIs(end) {
+		p.nextToken()
+		return list
+	}
+
+	p.nextToken()
+	list = append(list, p.parseExpression(LOWEST))
+
+	for p.peekTokenIs(",") {
+		p.nextToken()
+		p.nextToken()
+		list = append(list, p.parseExpression(LOWEST))
+	}
+
+	if !p.peekTokenIs(end) {
+		p.errors = append(p.errors, fmt.Sprintf("expected next token to be %s, got %s instead", end, p.peekToken.Type.Label))
+		return nil
+	}
+
+	p.nextToken() // consume the end token
+
+	return list
+}
+
+/**
+ * Helper functions
+ */
+
+func getPrecedence(token lexer.GojoToken) int {
+	switch token.Type.Label {
 	case "=":
 		return ASSIGN
 	case "||":
@@ -379,160 +545,20 @@ func (p *Parser) peekPrecedence() int {
 	return getPrecedence(p.peekToken)
 }
 
-func (p *Parser) parseAtomicExpression() Expression {
-	switch p.curToken.Type.Label {
-	case "string":
-		return p.parseStringLiteral()
-	case "number":
-		return p.parseIntegerLiteral()
-	case "identifier":
-		return p.parseIdentifier()
-	case "true", "false":
-		return p.parseBooleanLiteral()
-	case "null":
-		return p.parseNullLiteral()
-	case "undefined":
-		return p.parseUndefinedLiteral()
-	case "(":
-		return p.parseGroupedExpression()
-	case "!":
-		return p.parsePrefixExpression()
-	case "while":
-		return p.parseWhileStatement()
-	default:
-		return nil
-	}
-}
-
-func (p *Parser) parsePrefixExpression() Expression {
-	expression := &PrefixExpression{
-		Token:    p.curToken,
-		Operator: p.curToken.Text,
-	}
-	p.nextToken()
-	expression.Right = p.parseExpression(PREFIX)
-	return expression
-}
-
-func (p *Parser) parseAssignmentExpression(left Expression) Expression {
-	exp := &AssignmentExpression{Token: p.curToken, Name: left.(*Identifier)}
-
-	p.nextToken() // Move past '='
-	exp.Value = p.parseExpression(LOWEST)
-
-	return exp
-}
-
-func (p *Parser) parseIntegerLiteral() *IntegerLiteral {
-	lit := &IntegerLiteral{Token: p.curToken}
-	lit.Value, _ = strconv.ParseInt(p.curToken.Text, 0, 64)
-	return lit
-}
-
-func (p *Parser) parseIdentifier() *Identifier {
-	return &Identifier{Token: p.curToken, Value: p.curToken.Text}
-}
-
-func (p *Parser) parseBooleanLiteral() *BooleanLiteral {
-	value := p.curToken.Type.Label == "true"
-	return &BooleanLiteral{Token: p.curToken, Value: value}
-}
-
-func (p *Parser) parseNullLiteral() *NullLiteral {
-	return &NullLiteral{Token: p.curToken}
-}
-
-func (p *Parser) parseUndefinedLiteral() *UndefinedLiteral {
-	return &UndefinedLiteral{Token: p.curToken}
-}
-
-func (p *Parser) parseStringLiteral() *StringLiteral {
-	return &StringLiteral{Token: p.curToken, Value: p.curToken.Text}
-}
-
-func (p *Parser) parseGroupedExpression() Expression {
-	p.nextToken() // Consume "("
-	exp := p.parseExpression(LOWEST)
-	if !p.expectPeek(")") {
-		return nil
-	}
-	return exp
-}
-
-func (p *Parser) parseWhileStatement() *WhileStatement {
-	stmt := &WhileStatement{Token: p.curToken}
-
-	if !p.expectPeek("(") {
-		return nil
-	}
-
-	p.nextToken()
-	stmt.Condition = p.parseExpression(LOWEST)
-
-	if !p.expectPeek(")") {
-		return nil
-	}
-
-	if !p.expectPeek("{") {
-		return nil
-	}
-
-	stmt.Body = p.parseBlockStatement()
-
-	return stmt
-}
-
-func (p *Parser) parseCallExpression(function Expression) Expression {
-	exp := &CallExpression{Token: p.curToken, Function: function}
-	exp.Arguments = p.parseExpressionList(")")
-	return exp
-}
-
-func (p *Parser) parseExpressionList(end string) []Expression {
-	var list []Expression
-
-	if p.peekTokenIs(end) {
-		p.nextToken()
-		return list
-	}
-
-	p.nextToken()
-	list = append(list, p.parseExpression(LOWEST))
-
-	for p.peekTokenIs(",") {
-		p.nextToken()
-		p.nextToken()
-		list = append(list, p.parseExpression(LOWEST))
-	}
-
-	if !p.peekTokenIs(end) {
-		p.errors = append(p.errors, fmt.Sprintf("expected next token to be %s, got %s instead", end, p.peekToken.Type.Label))
-		return nil
-	}
-
-	p.nextToken() // consume the end token
-
-	return list
-}
-
-/**
- * Helper functions
- */
-
-func (p *Parser) expectPeek(t string) bool {
-	if p.peekTokenIs(t) {
+func (p *Parser) expectPeek(tokenKey string) bool {
+	if p.peekTokenIs(tokenKey) {
 		p.nextToken()
 		return true
 	}
 	return false
 }
 
-func (p *Parser) peekTokenIs(t string) bool {
-	return p.peekToken.Type.Label == t
+func (p *Parser) peekTokenIs(tokenKey string) bool {
+	return p.peekToken.Type.Label == tokenKey
 }
 
-func (p *Parser) curTokenIs(t string) bool {
-	return p.curToken.Type.Label == t
+func (p *Parser) curTokenIs(tokenKey string) bool {
+	return p.curToken.Type.Label == tokenKey
 }
 
 /**
