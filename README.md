@@ -1,6 +1,6 @@
 # gojo
 
-Go javascript engine.
+Go javascript engine-o.
 
 ```sh
 go run main.go
