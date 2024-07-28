@@ -51,4 +51,5 @@ For the code `var x = 1 + 1;`
 - Standard compliant parser - https://github.com/jquery/esprima
 - AST Explore - https://astexplorer.net/
 - Recursive Descent Parsing: https://www.cs.rochester.edu/u/nelson/courses/csc_173/grammars/parsing.html#:~:text=Recursive-descent%20parsing%20is%20one,non-terminal%20with%20a%20procedure
+- Goja: https://github.com/dop251/goja (great minds think alike)
 
