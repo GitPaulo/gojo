@@ -267,14 +267,40 @@ func (l *Lexer) readNumber() string {
 	hasDecimalPoint := false
 	isScientificNotation := false
 
+	// Check for hexadecimal, octal, or binary literals
+	if l.curChar == '0' {
+		switch l.peekChar() {
+		case 'x', 'X': // hex
+			l.readChar()
+			l.readChar()
+			for isHexDigit(l.curChar) {
+				l.readChar()
+			}
+			return l.input[startPos:l.position]
+		case 'o', 'O': // oct
+			l.readChar()
+			l.readChar()
+			for isOctalDigit(l.curChar) {
+				l.readChar()
+			}
+			return l.input[startPos:l.position]
+		case 'b', 'B': // bin
+			l.readChar()
+			l.readChar()
+			for isBinaryDigit(l.curChar) {
+				l.readChar()
+			}
+			return l.input[startPos:l.position]
+		}
+	}
+
+	// Decimal and scientific notation
 	for {
 		if isDigit(l.curChar) {
-			// continue reading digits
+			// Continue reading digits
 		} else if l.curChar == '.' && !hasDecimalPoint {
-			// first decimal point is valid
 			hasDecimalPoint = true
 		} else if (l.curChar == 'e' || l.curChar == 'E') && !isScientificNotation {
-			// scientific notation (e.g., 1e10)
 			isScientificNotation = true
 			l.readChar()
 			if l.curChar == '+' || l.curChar == '-' {
@@ -282,7 +308,7 @@ func (l *Lexer) readNumber() string {
 			}
 			continue
 		} else {
-			break // break on non-digit character
+			break
 		}
 		l.readChar()
 	}
@@ -293,6 +319,12 @@ func (l *Lexer) readNumber() string {
 func (l *Lexer) readWord() string {
 	pos := l.position
 	for isLetter(l.curChar) || isDigit(l.curChar) {
+		// TODO: Unicode escape sequences in identifiers are not supported
+		if isHexDigit(l.peekCharTwo()) && isHexDigit(l.input[l.position+3]) &&
+			isHexDigit(l.input[l.position+4]) && isHexDigit(l.input[l.position+5]) {
+			fmt.Println("Unicode escape sequences in identifiers are not supported.")
+			os.Exit(1)
+		}
 		l.readChar()
 	}
 	return l.input[pos:l.position]
@@ -308,6 +340,18 @@ func isLetter(char byte) bool {
 
 func isDigit(char byte) bool {
 	return '0' <= char && char <= '9'
+}
+
+func isHexDigit(char byte) bool {
+	return (char >= '0' && char <= '9') || (char >= 'a' && char <= 'f') || (char >= 'A' && char <= 'F')
+}
+
+func isOctalDigit(char byte) bool {
+	return char >= '0' && char <= '7'
+}
+
+func isBinaryDigit(char byte) bool {
+	return char == '0' || char == '1'
 }
 
 /**

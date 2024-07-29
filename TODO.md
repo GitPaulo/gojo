@@ -74,6 +74,7 @@
 
 ## Notes
 
+- Array access and member access in inifix operations are broken. Need to fix that.
 - ~~Pointers to token type in lexer instead of copies for performance reasons~~
 - ~~Reassignments of variables~~
 - ~~Fixing infix operators generally lol~~
