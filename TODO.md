@@ -5,6 +5,7 @@
 - [ ] Parser (30%)
 - [ ] Optimisation Pipeline (0%)
 - [ ] Interpreter (15%)
+- [ ] Profiling (0%)
 - [x] REPL (100%)
 
 ## Language Support
