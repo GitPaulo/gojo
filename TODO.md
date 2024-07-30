@@ -1,5 +1,14 @@
 # Checklist
 
+## Features
+- [ ] Lexer (30%)
+- [ ] Parser (30%)
+- [ ] Optimisation Pipeline (0%)
+- [ ] Interpreter (15%)
+- [x] REPL (100%)
+
+## Language Support
+
 ### Variable Declarations
 - [x] `var` support
 - [x] `let` support
@@ -74,6 +83,12 @@
 
 ## Notes
 
+- Make an optimisation pipeline and include common techs:
+  - Constant Folding
+  - Dead Code Elimination
+  - Inlining
+  - Common Subexpression Elimination, Strength Reduction, ...
+  - ...
 - Array access and member access in inifix operations are broken. Need to fix that.
 - ~~Pointers to token type in lexer instead of copies for performance reasons~~
 - ~~Reassignments of variables~~
